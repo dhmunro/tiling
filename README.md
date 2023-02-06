@@ -4,3 +4,7 @@ there are only two sets, this is just a standard 2D coordinate system,
 but when there are more sets, every pair forms its own coordinate
 lattice.
 
+- [Explanation of Algorithms](https://dhmunro.github.io/tiling/)
+- [5-fold Penrose Tiling](https://dhmunro.github.io/tiling/rhombtile.html)
+- [8-fold Ammann-Beenker Tiling](https://dhmunro.github.io/tiling/rhombtile.html?nsym=4)
+- [12-fold Socolar Tiling](https://dhmunro.github.io/tiling/rhombtile.html?nsym=6)
