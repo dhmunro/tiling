@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Rhomb Tilings Dual to Multigrids</title>
+  <meta name="description"
+    content="Explore aperiodic tilings dual to multigrids.">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>MathJax = {tex: { inlineMath: [["$", "$"], ["\\(", "\\)"]] }};
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"
+          id="MathJax-script">
+  </script>
+  <style>
+    /* @import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap'); */
+    @import url('https://fonts.googleapis.com/css2?family=Merriweather+Sans:ital,wght@0,400;0,700;1,400;1,700&family=Merriweather:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Merriweather', serif;
+        /* font-family: 'Merriweather Sans', sans-serif; */
+        overflow: hidden;
+    }
+
+    .unselectable {
+        -webkit-user-select: none; /* Safari */
+        -ms-user-select: none; /* IE 10 and IE 11 */
+        user-select: none; /* Standard syntax */
+    }
+
+  </style>
+</head>
+
+<body>
+
+<script src="https://pixijs.download/release/pixi.min.js"></script>
+<script src="rhombtile.js"></script>
+<script>
+
+  // Interpret URL query parameters
+  // debug=yes
+  // theme=themename  color palette (palette name, optional R suffix)
+  //    hex-hex-hex-hex-hex also recognized (like coolors.co)
+  // nsym=number   of edge directions (2*nsym-gons)
+  // init=random|perfect|zero|zeros    to get special gamma[j]
+  // grid=color    to overlay multigrid
+  // edge=number   length of edges
+  let urlQueries = location.search.replace("\?", "");
+  if (urlQueries) {
+    urlQueries = Object.fromEntries(urlQueries.split("&")
+                                    .map(q => q.split("=")));
+  } else {
+    urlQueries = {}
+  }
+  let debug = urlQueries.debug;
+  debug = debug? (debug!="no" && debug!="0" && debug!="false") : false;
+  if (urlQueries.scheme && rhombDefiners[urlQueries.scheme]) {
+    rhombDefs = rhombDefiners[urlQueries.scheme];
+  }
+  let init = urlQueries.init;
+  if (init) {
+    if (["random", "perfect", "zero", "zeros"].indexOf(init) < 0)
+      init = undefined;
+  }
+  let options = {};
+  if (urlQueries.grid) options.gridColor = urlQueries.grid;
+  let theme = urlQueries.theme;
+  if (!theme) theme = "browns";
+  {
+    let hexcodes = theme.split("-");
+    if (hexcodes.length != 6) {
+      if (theme.endsWith("B")) {
+        options.bright = true;
+        theme = theme.replace(/B$/, "");
+      }
+      if (theme.endsWith("R")) {
+        options.flip = true;
+        theme = theme.replace(/R$/, "");
+      }
+    } else {
+      hexcodes = hexcodes.map(h => PIXI.utils.string2hex(h));
+      if (hexcodes.every(h => Number.isInteger(h))) {
+        theme = hexcodes;
+      }
+    }
+  }
+
+  let nsym = 5;
+  if (urlQueries.nsym && !isNaN(parseFloat(urlQueries.nsym))) {
+    nsym = parseFloat(urlQueries.nsym);
+  }
+
+  let width = window.innerWidth;
+  let height = window.innerHeight;
+  let edge = 40;
+  if (debug) {
+    width = height = 300;
+    edge = 140;
+  }
+  if (urlQueries.edge && !isNaN(parseFloat(urlQueries.edge))) {
+    edge = parseFloat(urlQueries.edge);
+  }
+  if (edge < 10) edge = 10;
+  if (edge > width/2) edge = width/2;
+  if (edge > height/2) edge = height/2;
+
+  const app = new PIXI.Application({width: width, height: height,
+                                    antialias: true});
+  app.stage.interactive = true;
+  document.body.appendChild(app.view);
+  // texture = app.renderer.generateTexture(graphic);
+  // sprite = new PIXI.Sprite(texture);
+  // sprite.texture = anotherTexture;
+  //   also: x, y, parent  removeFromParent()
+  //         destroy({texture: true, baseTexture: true})
+
+  class Tiling {
+    constructor(stage, multigrid, edge) {
+      this.stage = stage;
+      this.grid = multigrid;
+      this.edge = edge;
+      this.graphics = new PIXI.Graphics();
+      stage.addChild(this.graphics);
+      this.drawGrid = false;
+      this._home = [edge, Array.from(multigrid.gamma)];
+      // this.rhombTextures = multigrid.pairs.map((_, ipair) => {
+      //   const verts = multigrid.rhombVerts([0, 0], ipair, edge);
+      //   const graphics = new PIXI.Graphics();
+      //   graphics.lineStyle(2, 0x808080);
+      //   graphics.beginFill(0xffcc00, 1);
+      //   graphics.drawPolygon(verts.flat());
+      //   graphics.endFill();
+      //   return app.renderer.generateTexture(graphics);
+      // });
+      // this.spareSprites = [];
+    }
+
+    draw() {
+      this.graphics.clear();
+      const box = [0, width, 0, height];
+      const liner = this.drawGrid?
+            (grid, pts, r, kr) => this.liner(grid, pts, r, kr) : null;
+      this.grid.crossLines(box, this.edge, (grid, v0, ipair, index) =>
+        this.tiler(grid, v0, ipair, index), liner);
+    }
+
+    pan(dx, dy) {
+      if (Array.isArray(dx)) [dx, dy] = dx;
+      this.grid.pan(dx, dy, this.edge);
+      this.draw();
+    }
+
+    zoom(factor, xcen, ycen) {
+      const edge = this.edge * factor;
+      if (edge < 10 || edge > Math.min(width, height)/2) return false;
+      if (xcen === undefined) {
+        xcen = width/2;
+        ycen = height/2;
+      } else if (Array.isArray(xcen)) {
+        [xcen, ycen] = xcen;
+      }
+      this.edge = edge;
+      this.pan((1-factor)*xcen, (1-factor)*ycen);
+      this.draw();
+    }
+
+    home() {
+      [this.edge, this.grid.gamma] = this._home;
+      this.draw();
+    }
+
+    tiler(grid, v0, ipair, index) {
+      // rhomb = new PIXI.Sprite(this.rhombTextures[ipair]);
+      // [rhomb.x, rhomb.y] = v0;
+      // this.stage.addChild(rhomb);
+      const verts = grid.rhombVerts(v0, ipair, this.edge);
+      const gr = this.graphics;
+      gr.lineStyle({width: 1.5, color: this.color(), miterLimit: 1});
+      gr.beginFill(this.color(grid, ipair, index), 1);
+      gr.drawPolygon(verts.flat());
+      gr.endFill();
+    }
+
+    liner(grid, pts, r, kr) {
+      const gr = this.graphics;
+      gr.lineStyle(2, this.palette? this.palette.gridColor : 0xff0000);
+      gr.moveTo(...pts[0]);
+      gr.lineTo(...pts[1]);
+    }
+
+    color(grid, ipair, index) {
+      if (!this.palette) return grid? 0xede1c2 : 0x8a962d;
+      return this.palette.color(grid, ipair, index);
+    }
+  }
+
+  class TilePalette {
+    constructor(edgeColor, tileColors, options) {
+      this.edgeColor = intColor(edgeColor);
+      if (tileColors.length != 5) {
+        throw new Error("currently handle only five-color palettes");
+      }
+      this.tileColors = tileColors.map(c => intColor(c));
+      this.applyOptions(options);
+    }
+
+    applyOptions(options) {
+      let {gridColor, shapeOnly, noIndex, bright, flip} = options? options : {};
+      this.gridColor = intColor(gridColor? gridColor : "red");
+      this.shapeOnly = shapeOnly? ["no", "false"].indexOf(shapeOnly)<0 : false;
+      this.noIndex = noIndex? ["no", "false"].indexOf(noIndex)<0 : false;
+      if (bright) {
+        let [c0, c1, c2, c3, c4] = this.tileColors;
+        this.tileColors = [c1, c0, c2, c4, c3];
+      }
+      if (flip) this.tileColors = this.tileColors.map((_, i, a) => a[4-i]);
+    }
+
+    color(grid, ipair, index) {
+      if (!grid) return this.edgeColor;
+      let nsym = grid.zeta.length;
+      index = (index > nsym/2 - 1);
+      let [,,,,, iColor] = grid.pairs[ipair];
+      let nColors = grid.bases.length;
+      if (this.shapeOnly || !(nsym%2)) {
+        // Using base angles for coloring does not work for even nsym
+        // - it just picks out a few orientations to highlight.
+        nColors = grid.nshapes;
+        iColor = grid.shapes[iColor];
+      }
+      if (nColors == 2) {
+        if (this.noIndex) {
+          iColor = this.bright? [0, 4][iColor] : [1, 3][iColor];
+        } else {
+          iColor = index? [0, 4][iColor] : [1, 3][iColor];
+        }
+      } else if (nColors == 3) {
+        if (this.noIndex) {
+          iColor = this.bright? [0, 2, 4][iColor] : [1, 2, 3][iColor];
+        } else {
+          iColor = index? [0, 2, 4][iColor] : [1, 2, 3][iColor];
+        }
+      } else if (nColors == 4) {
+        iColor = [0, 1, 3, 4][iColor];
+      } else {
+        iColor = iColor % 5;
+      }
+      let color = this.tileColors[iColor];
+      if (nColors > 2 && !this.noIndex) {
+        // TODO: somehow enhance color depending on index
+      }
+      return color;
+    }
+  }
+
+  function intColor(c) {
+    return Number.isInteger(c)? c : PIXI.utils.string2hex(c);
+  }
+
+  const themes = {
+    browns: new TilePalette("#888", ["#edede9", "#d6ccc2", "#f5ebe0",
+                                     "#e3d5ca", "#d5bdaf"]),
+    blues: new TilePalette("#888", ["#e8e8ed", "#c3cdd6", "#dfe9f5",
+                                    "#cad8e3", "#b0c8d6"]),
+    greens: new TilePalette("#888", ["#e8edea", "#c4d6c3", "#e0f5df",
+                                     "#cde3ca", "#b7d6b0"]),
+    purples: new TilePalette("#888", ["#ede8ed", "#cec3d6", "#ecdff5",
+                                      "#d7cae3", "#c2b0d6"]),
+    pinks: new TilePalette("#888", ["#f2e9e3", "#e1b7b9", "#f8dddf",
+                                    "#ebc2c6", "#e1a3ae"]),
+    pastels: new TilePalette("#888", ["#ffc09f", "#ffee93", "#fcf5c7",
+                                      "#a0ced9", "#adf7b6"]),
+    pinkpeach: new TilePalette("#888", ["#ffb5a7", "#fcd5ce", "#f8edeb",
+                                        "#f9dcc4", "#fec89a"]),
+    greenbrown: new TilePalette("#888", ["#ccd5ae", "#e9edc9", "#fefae0",
+                                         "#faedcd", "#d4a373"]),
+    bluebrick: new TilePalette("#888", ["#66b8d9", "#8bc3d9", "#d9c0ba",
+                                        "#d99f6c", "#d98673"]),
+    purpleblue: new TilePalette("#888", ["#de91b5", "#d293c2", "#bca3d6",
+                                         "#a6b7de", "#91bfde"]),
+    beigeaqua: new TilePalette("#888", ["#b09e99", "#fee9e1", "#fad4c0",
+                                        "#c0fdfb", "#64b6ac"]),
+    tealbrick: new TilePalette("#888", ["#006d77", "#83c5be", "#edf6f9",
+                                        "#ffddd2", "#e29578"]),
+    greens2: new TilePalette("#888", ["#edeec9", "#dde7c7", "#bfd8bd",
+                                      "#98c9a3", "#77bfa3"]),
+  };
+
+  const tiling = new Tiling(app.stage, new Multigrid(nsym, init), edge);
+  if (options.gridColor) tiling.drawGrid = true;
+  if (Array.isArray(theme)) {
+    let edgeColor = theme.shift();
+    theme = new TilePalette(edgeColor, theme, options);
+  } else if (!themes[theme]) {
+    theme = undefined;
+  } else {
+    theme = themes[theme];
+    if (options) theme.applyOptions(options);
+  }
+  if (theme) tiling.palette = theme;
+  tiling.pan(width/2, height/2);
+
+  window.addEventListener("resize", () => {
+    [width, height] = [window.innerWidth, window.innerHeight];
+    app.renderer.resize(width, height);
+    tiling.draw();
+  });
+
+  let dragging, gesturing;
+  app.stage.on("pointerdown", (event) => {
+    if (Array.isArray(gesturing)) {
+      dragging = gesturing = undefined;
+      return;
+    } else if (dragging) {
+      gesturing = [gesturing, event.pointerId, event.clientX, event.clientY];
+    } else {
+      dragging = [event.clientX, event.clientY];
+      gesturing = event.pointerId;
+    }
+  });
+  app.stage.on("pointermove", (event) => {
+    if (!dragging) return;
+    if (!Array.isArray(gesturing)) {  // dragging
+      const [x0, y0] = dragging;
+      const [x, y] = [event.clientX, event.clientY];
+      dragging = [x, y];
+      tiling.pan(x-x0, y-y0);
+    } else {  // pinch gesture
+      const [xa0, ya0] = dragging;
+      const [ida, idb, xb0, yb0] = gesturing;
+      let [xa1, ya1, xb1, yb1] = [xa0, ya0, xb0, yb0];
+      const isa = event.pointerId == ida;
+      if (isa) {
+        [xa1, ya1] = [event.clientX, event.clientY];
+      } else if (event.pointerId == idb) {
+        [xb1, yb1] = [event.clientX, event.clientY];
+      } else {
+        dragging = gesturing = undefined;
+        return;  // cancel zoom
+      }
+      let r20 = (xa0 - xb0)**2 + (ya0 - yb0)**2;
+      let r21 = (xa1 - xb1)**2 + (ya1 - yb1)**2;
+      let factor = r21 / (r20 + 1.e-30);
+      if (factor > 20 || factor < 0.05) {
+        dragging = gesturing = undefined;
+        return;  // cancel zoom
+      }
+      if (factor > 0.992 && factor < 1.008) return;  // skip tiny changes
+      if (isa) dragging = [xa1, ya1];
+      else gesturing.splice(2, 2, xb1, yb1);
+      tiling.zoom(Math.sqrt(factor), 0.5*(xa1 + xb1), 0.5*(ya1 + yb1));
+    }
+  });
+  const stopDragging = () => { dragging = gesturing = undefined; };
+  app.stage.on("pointerup", stopDragging);
+  app.stage.on("pointercancel", stopDragging);
+  app.stage.on("pointerleave", stopDragging);
+  app.stage.on("pointerout", stopDragging);
+
+  app.stage.on("wheel", (event) => {
+    let [xcen, ycen] = [event.clientX, event.clientY];
+    let [dx, dy] = [event.deltaX, event.deltaY];  // _normalizeWheelDelta(event)
+    // Some browsers treat skiftKey as horizontal scroll
+    if (dy === 0 && event.shiftKey) [dx, dy] = [dy, dx];
+    if (dy > 0) {
+      // pull top of wheel toward yourself (scroll down)
+      // scroll down --> zoom out
+      tiling.zoom(1/1.05, xcen, ycen);
+    } else if (dy < 0) {
+      // push top of wheel away from yourself (scroll down)
+      // scroll up --> zoom in
+      tiling.zoom(1.05, xcen, ycen);
+    }
+  });
+  // github.com/pixijs/pixi.js/wiki/v5-Hacks#prevent-pinch-gesture-in-chrome
+  // add prevent default event listener only to app canvas (rather than window)
+  app.view.addEventListener("wheel", e=>{
+    e.preventDefault();
+  }, {passive: false});
+
+  /**
+   * _normalizeWheelDelta
+   * This code performs some adjustment of the wheel event delta values.
+   * The values may be given in PIXEL, LINES, or PAGE and we want them in PIXEL.
+   *
+   * Great summaries here:
+   *   https://dev.to/danburzo/pinch-me-i-m-zooming-gestures-in-the-dom-a0e
+   *   https://github.com/w3c/uievents/issues/181#issuecomment-392648065
+   *
+   * Note that Firefox will now change its behavior depending on how you look
+   * at the delta values!
+   *   https://github.com/mdn/content/issues/11811
+   *   https://bugzilla.mozilla.org/show_bug.cgi?id=1392460#c33
+   * (Because Pixi's `normalizeWheelEvent` code in `EventSystem.ts` reads
+   * `deltaMode` before `deltaX/Y`,
+   *   we get LINES sometimes in Firefox, particularly when using a physical
+   *   mouse with a wheel)
+   *
+   * Also see
+   * https://github.com/basilfx/normalize-wheel/blob/master/src/normalizeWheel.js
+   *   for an older version of this sort of code.
+   *
+   * And this great page for testing what events your browser generates:
+   *   https://domeventviewer.com/
+   *
+   * @param   `e`  A native DOM WheelEvent
+   * @returns `Array` of normalized `[deltaX, deltaY]` in pixels
+   */
+  // function _normalizeWheelDelta(e) {
+  //   let [dX, dY] = [e.deltaX, e.deltaY];  // raw delta values
+  // 
+  //   if (dY === 0 && e.shiftKey) {  // Some browsers treat skiftKey as
+  //                                  // horizontal scroll
+  //     [dX, dY] = [e.deltaY, e.deltaX];    // swap dx/dy values to undo it.
+  //   }
+  // 
+  //   let [sX, sY] = [Math.sign(dX), Math.sign(dY)];    // signs
+  //   let [mX, mY] = [Math.abs(dX), Math.abs(dY)];      // magnitudes
+  // 
+  //   // Round numbers are generally generated from 2 finger pans on a trackpad.
+  //   // We'll try to keep the round numbers round and the fractional numbers
+  //   // fractional.
+  //   // Also, we want round numbers in LINE or PAGE units to become fractional
+  //   // because they won't be from a trackpad.
+  //   const isRoundX = (typeof mY === 'number' && isFinite(mX) &&
+  //                     Math.floor(mX) === mX);
+  //   const isRoundY = (typeof mY === 'number' && isFinite(mY) &&
+  //                     Math.floor(mY) === mY);
+  //   const fuzzX = (isRoundX &&
+  //                  e.deltaMode === WheelEvent.DOM_DELTA_PIXEL) ? 0 : 0.001;
+  //   const fuzzY = (isRoundY &&
+  //                  e.deltaMode === WheelEvent.DOM_DELTA_PIXEL) ? 0 : 0.001;
+  // 
+  //   // If the wheel delta values are not given in pixels, convert to pixels.
+  //   // (These days only Firefox will _sometimes_ report wheel delta in LINE
+  //   // units).
+  //   // https://bugzilla.mozilla.org/show_bug.cgi?id=1392460#c33
+  //   if (e.deltaMode !== WheelEvent.DOM_DELTA_PIXEL) {
+  //     let pixels;
+  //     if (e.deltaMode === WheelEvent.DOM_DELTA_LINE) {
+  //       pixels = 8;
+  //     } else if (e.deltaMode === WheelEvent.DOM_DELTA_PAGE) {
+  //       pixels = 24;
+  //     } else {     /* unknown units? */
+  //       pixels = 1;
+  //     }
+  // 
+  //     mX *= pixels;
+  //     mY *= pixels;
+  //   }
+  // 
+  //   // Limit the returned values to prevent user from scrolling too fast.
+  //   const MAX = 40;
+  //   const pX = sX * (Math.min(MAX, mX) + fuzzX);
+  //   const pY = sY * (Math.min(MAX, mY) + fuzzY);
+  // 
+  //   // console.log(`deltaMode = ${e.deltaMode}, inX = ${e.deltaX},
+  //   //             inY = ${e.deltaY}, outX = ${pX}, outY = ${pY}`);
+  //   return [pX, pY];
+  // }
+
+</script>
+
+</body>
+</html>
