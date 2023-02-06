@@ -6,5 +6,5 @@ lattice.
 
 - [Explanation of Algorithms](https://dhmunro.github.io/tiling/)
 - [5-fold Penrose Tiling](https://dhmunro.github.io/tiling/rhombtile.html)
-- [8-fold Ammann-Beenker Tiling](https://dhmunro.github.io/tiling/rhombtile.html?nsym=4)
-- [12-fold Socolar Tiling](https://dhmunro.github.io/tiling/rhombtile.html?nsym=6)
+- [8-fold Ammann-Beenker Tiling](https://dhmunro.github.io/tiling/rhombtile.html?nsym=4&theme=pinkpeach)
+- [12-fold Socolar Tiling](https://dhmunro.github.io/tiling/rhombtile.html?nsym=6&theme=bluebrick)
