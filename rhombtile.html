@@ -80,7 +80,7 @@
   if (!theme) theme = "browns";
   {
     let hexcodes = theme.split("-");
-    if (hexcodes.length != 6) {
+    if (hexcodes.length < 6) {
       if (theme.endsWith("B")) {
         options.bright = true;
         theme = theme.replace(/B$/, "");
@@ -213,8 +213,8 @@
   class TilePalette {
     constructor(edgeColor, tileColors, options) {
       this.edgeColor = intColor(edgeColor);
-      if (tileColors.length != 5) {
-        throw new Error("currently handle only five-color palettes");
+      if (tileColors.length < 5) {
+        throw new Error("palettes need at least five colors");
       }
       this.tileColors = tileColors.map(c => intColor(c));
       this.applyOptions(options);
@@ -225,10 +225,13 @@
       this.gridColor = intColor(gridColor? gridColor : "red");
       this.showIndex = showIndex? ["no", "false"].indexOf(showIndex)<0 : false;
       if (bright) {
-        let [c0, c1, c2, c3, c4] = this.tileColors;
-        this.tileColors = [c1, c0, c2, c4, c3];
+        let [c0, c1, c2, c3, c4, ...rest] = this.tileColors;
+        this.tileColors = [c1, c0, c2, c4, c3, ...rest];
       }
-      if (flip) this.tileColors = this.tileColors.map((_, i, a) => a[4-i]);
+      if (flip) {
+        let [c0, c1, c2, c3, c4, ...rest] = this.tileColors;
+        this.tileColors = [c4, c3, c2, c1, c0, ...rest];
+      }
     }
 
     color(grid, ipair, index) {
@@ -256,7 +259,7 @@
       } else if (nColors == 4) {
         iColor = [0, 1, 3, 4][iColor];
       } else {
-        iColor = iColor % 5;
+        iColor = iColor % this.tileColors.length;
       }
       let color = this.tileColors[iColor];
       if (nColors > 2 && this.showIndex) {
@@ -270,6 +273,16 @@
     return Number.isInteger(c)? c : PIXI.utils.string2hex(c);
   }
 
+  // The greenbrown palette shows the hex tiles (three fused 60 degree
+  // rhombs) which feture prominently in all the nsym divisible by 3
+  // tillings.  Use the following palettes to show the progression:
+  // nsym=6&theme=888-ccd5ae-e9edc9-d4a373-faedcd-fefae0
+  // nsym=9&theme=888-e9edc9-faedcd-fefae0-d4a373-ccd5ae
+  // nsym=12&theme=888-greenbrownB
+  // nsym=15&theme=888-greenbrown
+  // nsym=18&theme=888-greenbrownR
+  // nsym=21&theme=888-ccd5ae-e9edc9-faedcd-fefae0-e9edc9-faedcd-d4a373
+  // nsym=24&theme=888-ccd5ae-e9edc9-faedcd-fefae0-ccd5ae-e9edc9-faedcd-d4a373
   const themes = {
     browns: new TilePalette("#888", ["#edede9", "#d6ccc2", "#f5ebe0",
                                      "#e3d5ca", "#d5bdaf"]),

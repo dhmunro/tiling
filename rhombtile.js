@@ -34,10 +34,10 @@ class Multigrid {
     let n = directions.length;
     let shifted = (n % 2) == 0 && n > 8;
     if (gamma == "zeros") [shifted, gamma] = [true, "zero"];
-    if (n < 4 || n > 24 ||
+    if (n < 4 ||
         directions[0].length != 2 || !Number.isFinite(directions[0][0]) ||
         !Number.isFinite(directions[0][1])) {
-      throw new Error("expected between 4 and 24 2D direction vectors");
+      throw new Error("expected 4 or more 2D direction vectors");
     }
     if (gamma == "random") {
       gamma = new Array(n).fill(1).map(() => Math.random());
