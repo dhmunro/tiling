@@ -32,10 +32,10 @@ class Multigrid {
       checkSort = true;
     }
     let n = directions.length;
-    let shifted = (n % 2) == 0 && n > 8;
+    let shifted = (n % 2) == 0 && n > 8 && !gamma;
     if (gamma == "zeros") [shifted, gamma] = [true, "zero"];
-    if (n < 4 ||
-        directions[0].length != 2 || !Number.isFinite(directions[0][0]) ||
+    if (n < 4 || directions[0].length != 2 ||
+        !Number.isFinite(directions[0][0]) ||
         !Number.isFinite(directions[0][1])) {
       throw new Error("expected 4 or more 2D direction vectors");
     }
