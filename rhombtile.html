@@ -46,6 +46,17 @@
   // init=random|perfect|zero|zeros    to get special gamma[j]
   // grid=color    to overlay multigrid
   // edge=number   length of edges
+  //
+  // tiling/rhombtile.html?nsym=8&theme=brownsR  nsym=8 works best with R
+  // tiling/rhombtile.html?nsym=9&theme=brownsB
+  // tiling/rhombtile.html?nsym=10&theme=browns
+  // tiling/rhombtile.html?nsym=11&theme=brownsB
+  // browns, blues, greens, pinks, purples all very similar
+  // for nsym < 8, just use default browns (or blues etc.)
+  // for nsym == 8, use R, e.g. brownsR
+  // for even nsym > 8, plain browns, blues, etc. best
+  // for odd nsym > 8, brownsB, bluesB, etc. best
+  //   but B makes little difference for large enough nsym
   let urlQueries = location.search.replace("\?", "");
   if (urlQueries) {
     urlQueries = Object.fromEntries(urlQueries.split("&")
@@ -75,7 +86,7 @@
         theme = theme.replace(/B$/, "");
       }
       if (theme.endsWith("S")) {
-        options.noIndex = true;
+        options.showIndex = true;
         theme = theme.replace(/S$/, "");
       }
       if (theme.endsWith("R")) {
@@ -210,10 +221,9 @@
     }
 
     applyOptions(options) {
-      let {gridColor, shapeOnly, noIndex, bright, flip} = options? options : {};
+      let {gridColor, showIndex, bright, flip} = options? options : {};
       this.gridColor = intColor(gridColor? gridColor : "red");
-      this.shapeOnly = shapeOnly? ["no", "false"].indexOf(shapeOnly)<0 : false;
-      this.noIndex = noIndex? ["no", "false"].indexOf(noIndex)<0 : false;
+      this.showIndex = showIndex? ["no", "false"].indexOf(showIndex)<0 : false;
       if (bright) {
         let [c0, c1, c2, c3, c4] = this.tileColors;
         this.tileColors = [c1, c0, c2, c4, c3];
@@ -226,22 +236,20 @@
       let nsym = grid.zeta.length;
       index = (index > nsym/2 - 1);
       let [,,,,, iColor] = grid.pairs[ipair];
-      let nColors = grid.bases.length;
-      if (this.shapeOnly || !(nsym%2)) {
-        // Using base angles for coloring does not work for even nsym
-        // - it just picks out a few orientations to highlight.
-        nColors = grid.nshapes;
-        iColor = grid.shapes[iColor];
-      }
+      // let nColors = grid.bases.length;
+      // Using base angles for coloring does not work for even nsym
+      // - it just picks out a few orientations to highlight.
+      let nColors = grid.nshapes;
+      iColor = grid.shapes[iColor];
       if (nColors == 2) {
-        if (this.noIndex) {
-          iColor = [1, 3][iColor];
+        if (!this.showIndex) {
+          iColor = [0, 4][iColor];
         } else {
           iColor = index? [0, 4][iColor] : [1, 3][iColor];
         }
       } else if (nColors == 3) {
-        if (this.noIndex) {
-          iColor = [1, 2, 3][iColor];
+        if (!this.showIndex) {
+          iColor = [0, 2, 4][iColor];
         } else {
           iColor = index? [0, 2, 4][iColor] : [1, 2, 3][iColor];
         }
@@ -251,7 +259,7 @@
         iColor = iColor % 5;
       }
       let color = this.tileColors[iColor];
-      if (nColors > 2 && !this.noIndex) {
+      if (nColors > 2 && this.showIndex) {
         // TODO: somehow enhance color depending on index
       }
       return color;
