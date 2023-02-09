@@ -20,6 +20,7 @@
         padding: 0;
         font-family: 'Merriweather', serif;
         /* font-family: 'Merriweather Sans', sans-serif; */
+        font-size: 14pt;
         overflow: hidden;
     }
 
@@ -29,10 +30,170 @@
         user-select: none; /* Standard syntax */
     }
 
+    h2 {
+        font-size: 125%;
+    }
+
+    #intro {
+        position: absolute;
+        width: 350px;
+        padding: 20px;
+        margin: 0;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        border-radius: 50px;
+        background: #eee;
+        font-size: 20pt;
+        transition: opacity 2s;
+    }
+
+    #menu {
+        position: absolute;
+        box-sizing: border-box;
+        width: 75%;
+        max-width: 400px;
+        padding: 15px;
+        margin: 0;
+        top: 0;
+        right: 0%;
+        transform: translate(400px, 0);
+        background: #eee;
+        transition: transform 0.5s;
+    }
+
+    #menu .close-x {
+        position: absolute;
+        top: 10px;
+        right: 6px;
+    }
+    .close-x {
+        position: relative;
+        width: 40px;
+        height: 30px;
+        cursor: pointer;
+    }
+    .close-x::before, .close-x::after {
+        content: " ";
+        display: block;
+        position: absolute;
+        left: 0;
+        top: 12px;
+        height: 6px;
+        width: 100%;
+        border-radius: 6px;
+        background-color: darkslategray;
+    }
+    .close-x::before {
+        transform: rotate(45deg);
+    }
+    .close-x::after {
+        transform: rotate(-45deg);
+    }
+
+    .button {
+        background-color: #ddd;
+        color: darkslategray;
+        border: 3px solid darkslategray;
+        border-radius: 12px;
+        padding: 5px 15px;
+        margin: 0 20px;
+        display: inline-block;
+        vertical-align: middle;
+        text-align: center;
+        cursor: pointer;
+    }
+
+    .button img {
+        display: block;
+        width: 22px;
+        height: 22px;
+        margin: auto;
+    }
+
+    input, select {
+        font-size: 14pt;
+    }
+
   </style>
 </head>
 
 <body>
+
+  <canvas id="pixi"></canvas>
+
+  <div id="intro" class="unselectable" style="opacity: 0.8;">
+    <p style="text-align: center">Drag to pan</p>
+    <p style="text-align: center">Wheel/Pinch to zoom</p>
+    <p style="text-align: center">Double Click for more</p>
+  </div>
+
+  <div id="menu" class="unselectable">
+    <div class="close-x" onclick="closeMenu()"></div>
+    <h2>Multigrid Rhomb Tilings</h2>
+    <hr/>
+    <p>Interactions:<br/>&nbsp;&nbsp;&nbsp;
+      Drag, Wheel or Pinch, Double click</p>
+    &nbsp;&nbsp;&nbsp;or<div class="button" onclick="tiling.zoom(1.25)">
+        <img src="magnifying-glass-plus.svg"></img></div>
+      Zoom
+      <div class="button" onclick="tiling.zoom(1/1.25)">
+        <img src="magnifying-glass-minus.svg"></img></div>
+      here
+    <hr/>
+    <p>Patterns:</p>
+    <div style="display: inline; margin: 0 10px;">
+      <label for="nsym">nsym:</label>
+      <input type="number" id="nsym" name="nsym"
+             style="width: 45px;" min="4" max="99"
+             onchange="changeNsym(this)"
+             onkeypress="return digitOnly(event, 99)"></div>
+    <div style="display: inline; margin: 0 10px;">
+      <label for="center">spokes:</label>
+      <input type="checkbox" id="center" name="center"
+             onchange="changeCenter(this)"></div>
+    <div style="display: inline; margin: 0 10px;">
+      <label for="grid">grid:</label>
+      <input type="checkbox" id="grid" name="grid"
+             onchange="changeGrid(this)"></div>
+    <hr/>
+    <p>Colors:</p>
+    <div style="display: inline; margin: 0 10px;">
+      <label for="predefined">predefined:</label>
+      <select id="predefined" id="predefined"
+              onchange="changePalette(this)">
+        <option value="" hidden="hidden">- custom -</option>
+        <option value="blues">blues</option>
+        <option value="browns">browns</option>
+        <option value="greens">greens</option>
+        <option value="pinks">pinks</option>
+        <option value="purples">purples</option>
+        <option value="pastels">pastels</option>
+        <option value="greenbrown">greenbrown</option>
+        <option value="pinkpeach">pinkpeach</option>
+        <option value="bluebrick">bluebrick</option>
+        <option value="purpleblue">purpleblue</option>
+        <option value="beigeaqua">beigeaqua</option>
+        <option value="tealbrick">tealbrick</option>
+        <option value="darkgreens">darkgreens</option>
+      </select>
+    </div>
+    <br/>
+    <div style="padding-top: 5px">
+      <div style="display: inline; margin: 0 10px;">
+        <label for="reverse">reverse:</label>
+        <input type="checkbox" id="reverse" name="reverse"
+               onchange="changeReverse(this)"></div>
+      <div style="display: inline; margin: 0 10px;">
+        <label for="flip">swap:</label>
+        <input type="checkbox" id="flip" name="flip"
+               onchange="changeFlip(this)"></div>
+      <div style="display: inline; margin: 0 10px;">
+        <label for="index">index:</label>
+        <input type="checkbox" id="index" name="index"
+               onchange="changeIndex(this)"></div>
+    </div>
+  </div>
 
 <script src="https://pixijs.download/release/pixi.min.js"></script>
 <script src="rhombtile.js"></script>
@@ -77,7 +238,7 @@
   let options = {};
   if (urlQueries.grid) options.gridColor = urlQueries.grid;
   let theme = urlQueries.theme;
-  if (!theme) theme = "browns";
+  if (!theme) theme = "blues";
   {
     let hexcodes = theme.split("-");
     if (hexcodes.length < 6) {
@@ -121,9 +282,9 @@
   if (edge > height/2) edge = height/2;
 
   const app = new PIXI.Application({width: width, height: height,
-                                    antialias: true});
+                                    antialias: true,
+                                    view: document.getElementById("pixi")});
   app.stage.interactive = true;
-  document.body.appendChild(app.view);
   // texture = app.renderer.generateTexture(graphic);
   // sprite = new PIXI.Sprite(texture);
   // sprite.texture = anotherTexture;
@@ -199,7 +360,7 @@
 
     liner(grid, pts, r, kr) {
       const gr = this.graphics;
-      gr.lineStyle(2, this.palette? this.palette.gridColor : 0xff0000);
+      gr.lineStyle(1, this.palette? this.palette.gridColor : 0);
       gr.moveTo(...pts[0]);
       gr.lineTo(...pts[1]);
     }
@@ -222,8 +383,8 @@
 
     applyOptions(options) {
       let {gridColor, showIndex, bright, flip} = options? options : {};
-      this.gridColor = intColor(gridColor? gridColor : "red");
-      this.showIndex = showIndex? ["no", "false"].indexOf(showIndex)<0 : false;
+      this.gridColor = intColor(gridColor? gridColor : "#000");
+      this.showIndex = showIndex;
       if (bright) {
         let [c0, c1, c2, c3, c4, ...rest] = this.tileColors;
         this.tileColors = [c1, c0, c2, c4, c3, ...rest];
@@ -308,20 +469,26 @@
                                         "#c0fdfb", "#64b6ac"]),
     tealbrick: new TilePalette("#888", ["#006d77", "#83c5be", "#edf6f9",
                                         "#ffddd2", "#e29578"]),
-    greens2: new TilePalette("#888", ["#edeec9", "#dde7c7", "#bfd8bd",
-                                      "#98c9a3", "#77bfa3"]),
+    darkgreens: new TilePalette("#888", ["#edeec9", "#dde7c7", "#bfd8bd",
+                                         "#98c9a3", "#77bfa3"]),
   };
 
   const tiling = new Tiling(app.stage, new Multigrid(nsym, init), edge);
   if (options.gridColor) tiling.drawGrid = true;
+  let predef = document.getElementById("predefined");
+  let predefs = Array.from(predef.children).map(c => c.value);
   if (Array.isArray(theme)) {
     let edgeColor = theme.shift();
     theme = new TilePalette(edgeColor, theme, options);
+    predef.selectedIndex = 0;
   } else if (!themes[theme]) {
     theme = undefined;
+    predef.selectedIndex = 0;
   } else {
+    let itheme = predefs.indexOf(theme);
     theme = themes[theme];
     if (options) theme.applyOptions(options);
+    predef.selectedIndex = (itheme < 0)? 0 : itheme;
   }
   if (theme) tiling.palette = theme;
   tiling.pan(width/2, height/2);
@@ -385,7 +552,7 @@
 
   app.stage.on("wheel", (event) => {
     let [xcen, ycen] = [event.clientX, event.clientY];
-    let [dx, dy] = [event.deltaX, event.deltaY];  // _normalizeWheelDelta(event)
+    let [dx, dy] = [event.deltaX, event.deltaY];
     // Some browsers treat skiftKey as horizontal scroll
     if (dy === 0 && event.shiftKey) [dx, dy] = [dy, dx];
     if (dy > 0) {
@@ -404,86 +571,136 @@
     e.preventDefault();
   }, {passive: false});
 
-  /**
-   * _normalizeWheelDelta
-   * This code performs some adjustment of the wheel event delta values.
-   * The values may be given in PIXEL, LINES, or PAGE and we want them in PIXEL.
-   *
-   * Great summaries here:
-   *   https://dev.to/danburzo/pinch-me-i-m-zooming-gestures-in-the-dom-a0e
-   *   https://github.com/w3c/uievents/issues/181#issuecomment-392648065
-   *
-   * Note that Firefox will now change its behavior depending on how you look
-   * at the delta values!
-   *   https://github.com/mdn/content/issues/11811
-   *   https://bugzilla.mozilla.org/show_bug.cgi?id=1392460#c33
-   * (Because Pixi's `normalizeWheelEvent` code in `EventSystem.ts` reads
-   * `deltaMode` before `deltaX/Y`,
-   *   we get LINES sometimes in Firefox, particularly when using a physical
-   *   mouse with a wheel)
-   *
-   * Also see
-   * https://github.com/basilfx/normalize-wheel/blob/master/src/normalizeWheel.js
-   *   for an older version of this sort of code.
-   *
-   * And this great page for testing what events your browser generates:
-   *   https://domeventviewer.com/
-   *
-   * @param   `e`  A native DOM WheelEvent
-   * @returns `Array` of normalized `[deltaX, deltaY]` in pixels
-   */
-  // function _normalizeWheelDelta(e) {
-  //   let [dX, dY] = [e.deltaX, e.deltaY];  // raw delta values
-  // 
-  //   if (dY === 0 && e.shiftKey) {  // Some browsers treat skiftKey as
-  //                                  // horizontal scroll
-  //     [dX, dY] = [e.deltaY, e.deltaX];    // swap dx/dy values to undo it.
-  //   }
-  // 
-  //   let [sX, sY] = [Math.sign(dX), Math.sign(dY)];    // signs
-  //   let [mX, mY] = [Math.abs(dX), Math.abs(dY)];      // magnitudes
-  // 
-  //   // Round numbers are generally generated from 2 finger pans on a trackpad.
-  //   // We'll try to keep the round numbers round and the fractional numbers
-  //   // fractional.
-  //   // Also, we want round numbers in LINE or PAGE units to become fractional
-  //   // because they won't be from a trackpad.
-  //   const isRoundX = (typeof mY === 'number' && isFinite(mX) &&
-  //                     Math.floor(mX) === mX);
-  //   const isRoundY = (typeof mY === 'number' && isFinite(mY) &&
-  //                     Math.floor(mY) === mY);
-  //   const fuzzX = (isRoundX &&
-  //                  e.deltaMode === WheelEvent.DOM_DELTA_PIXEL) ? 0 : 0.001;
-  //   const fuzzY = (isRoundY &&
-  //                  e.deltaMode === WheelEvent.DOM_DELTA_PIXEL) ? 0 : 0.001;
-  // 
-  //   // If the wheel delta values are not given in pixels, convert to pixels.
-  //   // (These days only Firefox will _sometimes_ report wheel delta in LINE
-  //   // units).
-  //   // https://bugzilla.mozilla.org/show_bug.cgi?id=1392460#c33
-  //   if (e.deltaMode !== WheelEvent.DOM_DELTA_PIXEL) {
-  //     let pixels;
-  //     if (e.deltaMode === WheelEvent.DOM_DELTA_LINE) {
-  //       pixels = 8;
-  //     } else if (e.deltaMode === WheelEvent.DOM_DELTA_PAGE) {
-  //       pixels = 24;
-  //     } else {     /* unknown units? */
-  //       pixels = 1;
-  //     }
-  // 
-  //     mX *= pixels;
-  //     mY *= pixels;
-  //   }
-  // 
-  //   // Limit the returned values to prevent user from scrolling too fast.
-  //   const MAX = 40;
-  //   const pX = sX * (Math.min(MAX, mX) + fuzzX);
-  //   const pY = sY * (Math.min(MAX, mY) + fuzzY);
-  // 
-  //   // console.log(`deltaMode = ${e.deltaMode}, inX = ${e.deltaX},
-  //   //             inY = ${e.deltaY}, outX = ${pX}, outY = ${pY}`);
-  //   return [pX, pY];
-  // }
+  let clicking;
+  app.stage.on("click", () => {
+    // triggers on mouse up after any drag
+    if (clicking) {
+      clearTimeout(clicking);
+      clicking = undefined;
+      // Double click activates overlay menu
+      openMenu();
+    } else {
+      clicking = setTimeout(() => {
+        clicking = undefined;
+      }, 600);  // 600 ms double click detection delay
+    }
+  });
+
+  // Fade out the intro div.
+  const intro = document.getElementById("intro");
+  intro.addEventListener("transitionend", (e) => {
+    intro.style.display = "none";
+  }, true);
+  setTimeout(() => {
+    intro.style.opacity = 0;
+  }, 4000);
+
+  const menu = document.getElementById("menu");
+
+  const openMenu = () => {
+    menu.style.transform = "translate(0, 0)";
+  };
+
+  const closeMenu = () => {
+    menu.style.transform = "translate(400px, 0)";
+  };
+
+  document.getElementById("nsym").value = nsym;
+  function changeNsym(input) {
+    let value = Number.parseInt(input.value);
+    if (value < 4 || value > 99) input.value = value = nsym;
+    if (value == nsym) return;
+    nsym = value;
+    tiling.grid = new Multigrid(nsym, init);
+    tiling.pan(width/2, height/2);
+  }
+  function digitOnly(event, maxValue) {
+    let digit = String.fromCharCode(event.keyCode);
+    if (isNaN(digit)) return false;
+    let value = event.target.value;
+    if (!value && digit=="0") return false;
+    value = Number.parseInt(value + digit)
+    return value <= maxValue;
+  }
+
+  document.getElementById("center").checked = (init == "perfect");
+  function changeCenter(input) {
+    let newInit = input.checked? "perfect" : undefined;
+    if (init == newInit) return;
+    init = newInit;
+    tiling.grid = new Multigrid(nsym, init);
+    tiling.pan(width/2, height/2);
+  }
+  document.getElementById("grid").checked = options.gridColor? true : false;
+  let gridColor = options.gridColor;
+  if (!gridColor) gridColor = "#000";
+  function changeGrid(input) {
+    if (input.checked) {
+      if (tiling.drawGrid) return;
+      options.gridColor = gridColor;
+      tiling.palette.gridColor = intColor(gridColor? gridColor : "#000");
+      tiling.drawGrid = true;
+      tiling.draw();
+    } else {
+      if (!tiling.drawGrid) return;
+      gridColor = options.gridColor;
+      tiling.drawGrid = false;
+      tiling.draw();
+    }
+  }
+
+  function changePalette(selector) {
+    if (!selector.value) return;
+    let newTheme = themes[selector.value];
+    if (!newTheme) {  // only if select options disagree with themes
+      selector.selectedIndex = 0;
+      return;
+    }
+    if (theme === newTheme) return;
+    theme = newTheme;
+    if (options) theme.applyOptions(options);
+    tiling.palette = theme;
+    tiling.draw();
+  }
+
+  document.getElementById("reverse").checked = options.flip? true : false;
+  document.getElementById("flip").checked = options.bright? true : false;
+  document.getElementById("index").checked = options.showIndex? true : false;
+  function changeReverse(input) {
+    let flip = options.flip;
+    if (input.checked) {
+      if (flip) return;
+    } else {
+      if (!flip) return;
+    }
+    options.flip = true;
+    theme.applyOptions(options);
+    if (!input.checked) delete options.flip;
+    tiling.draw();
+  }
+  function changeFlip(input) {
+    let bright = options.bright;
+    if (input.checked) {
+      if (bright) return;
+    } else {
+      if (!bright) return;
+    }
+    options.bright = true;
+    theme.applyOptions(options);
+    if (!input.checked) delete options.bright;
+    tiling.draw();
+  }
+  function changeIndex(input) {
+    if (input.checked) {
+      if (options.showIndex) return;
+      options.showIndex = true;
+    } else {
+      if (!options.showIndex) return;
+      delete options.showIndex;
+    }
+    theme.applyOptions(options);
+    tiling.draw();
+  }
 
 </script>
 
