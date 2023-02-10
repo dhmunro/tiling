@@ -51,15 +51,15 @@
     #menu {
         position: absolute;
         box-sizing: border-box;
-        width: 75%;
+        width: 80%;
         max-width: 400px;
+        max-height: 100%;
         padding: 15px;
         margin: 0;
         top: 0;
-        right: 0%;
-        transform: translate(400px, 0);
+        right: 0;
         background: #eee;
-        transition: transform 0.5s;
+        overflow: auto;
     }
 
     #menu .close-x {
@@ -128,7 +128,7 @@
     <p style="text-align: center">Double Click for more</p>
   </div>
 
-  <div id="menu" class="unselectable">
+  <div id="menu" class="unselectable" style="display: none;">
     <div class="close-x" onclick="closeMenu()"></div>
     <h2>Multigrid Rhomb Tilings</h2>
     <hr/>
@@ -600,11 +600,11 @@
   const menu = document.getElementById("menu");
 
   const openMenu = () => {
-    menu.style.transform = "translate(0, 0)";
+    menu.style.display = "block";
   };
 
   const closeMenu = () => {
-    menu.style.transform = "translate(400px, 0)";
+    menu.style.display = "none";
   };
 
   document.getElementById("nsym").value = nsym;
