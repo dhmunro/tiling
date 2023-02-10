@@ -573,19 +573,21 @@
     e.preventDefault();
   }, {passive: false});
 
-  let clicking = () => {
-    // triggers on mouse up after any drag
-    if (clicking) {
+  let clicking = (event) => {
+    // triggers on mouse up or touch end after any drag
+    if (clicking && tapid == event.pointerId) {
       clearTimeout(clicking);
-      clicking = undefined;
+      clicking = tapid = undefined;
       // Double click activates overlay menu
       openMenu();
     } else {
+      tapid = event.pointerId;
       clicking = setTimeout(() => {
-        clicking = undefined;
+        clicking = tapid = undefined;
       }, 600);  // 600 ms double click detection delay
     }
   };
+  let tapid;
   app.stage.on("click", clicking);
   app.stage.on("tap", clicking);
   clicking = undefined;
