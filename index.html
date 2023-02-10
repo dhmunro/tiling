@@ -573,8 +573,7 @@
     e.preventDefault();
   }, {passive: false});
 
-  let clicking;
-  app.stage.on("click", () => {
+  let clicking = () => {
     // triggers on mouse up after any drag
     if (clicking) {
       clearTimeout(clicking);
@@ -586,7 +585,10 @@
         clicking = undefined;
       }, 600);  // 600 ms double click detection delay
     }
-  });
+  };
+  app.stage.on("click", clicking);
+  app.stage.on("touchtap", clicking);
+  clicking = undefined;
 
   // Fade out the intro div.
   const intro = document.getElementById("intro");
