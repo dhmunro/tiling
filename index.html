@@ -134,12 +134,13 @@
     <hr/>
     <p>Interactions:<br/>&nbsp;&nbsp;&nbsp;
       Drag, Wheel or Pinch, Double click</p>
-    &nbsp;&nbsp;&nbsp;or<div class="button" onclick="tiling.zoom(1.25)">
+    <p><div class="button" onclick="tiling.zoom(1.25)">
         <img src="magnifying-glass-plus.svg"></img></div>
-      Zoom
       <div class="button" onclick="tiling.zoom(1/1.25)">
         <img src="magnifying-glass-minus.svg"></img></div>
-      here
+      <div class="button" onclick="toggleFullscreen()">
+        <img id="full-button" src="expand.svg"></img></div>
+      </p>
     <hr/>
     <p>Patterns:</p>
     <div style="display: inline; margin: 0 10px;">
@@ -498,6 +499,7 @@
   window.addEventListener("resize", () => {
     [width, height] = [window.innerWidth, window.innerHeight];
     app.renderer.resize(width, height);
+    checkFullButtonIcon();
     tiling.draw();
   });
 
@@ -706,6 +708,41 @@
     }
     theme.applyOptions(options);
     tiling.draw();
+  }
+
+  function toggleFullscreen() {
+    if (document.exitFullscreen) {
+      console.log(document.fullscreenElement);
+      if (document.fullscreenElement) document.exitFullscreen();
+      else document.documentElement.requestFullscreen();
+    } else if (document.webkitExitFullscreen) {
+      if (document.webkitFullscreenElement) document.webkitExitFullscreen();
+      else document.documentElement.webkitRequestFullscreen();
+    } else if (document.msExitFullscreen) {
+      if (document.msFullscreenElement) document.msExitFullscreen();
+      else document.documentElement.msRequestFullscreen();
+    } else if (document.mozExitFullscreen) {
+      if (document.mozFullscreenElement) document.mozExitFullscreen();
+      else document.documentElement.mozRequestFullscreen();
+    }
+  }
+
+  function testFullscreen() {
+    if (document.exitFullscreen) {
+      return document.fullscreenElement;
+    } else if (document.webkitExitFullscreen) {
+      return document.webkitFullscreenElement;
+    } else if (document.msExitFullscreen) {
+      return document.msFullscreenElement;
+    } else if (document.mozExitFullscreen) {
+      return document.mozFullscreenElement;
+    }
+  }
+
+  const fullButton = document.getElementById("full-button");
+  function checkFullButtonIcon() {
+    if (testFullscreen()) fullButton.src = "compress.svg";
+    else fullButton.src = "expand.svg";
   }
 
 </script>
