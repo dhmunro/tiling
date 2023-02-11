@@ -3,7 +3,7 @@
 <head>
   <title>Rhomb Tilings Dual to Multigrids</title>
   <meta name="description"
-    content="Explore aperiodic tilings dual to multigrids.">
+    content="Explore aperiodic rhomb tilings dual to multigrids.">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>MathJax = {tex: { inlineMath: [["$", "$"], ["\\(", "\\)"]] }};
@@ -194,8 +194,16 @@
         <input type="checkbox" id="index" name="index"
                onchange="changeIndex(this)"></div>
     </div>
+    <br/>
+    <div>
+      <div style="display: inline; margin: 0 10px;">
+        <label for="index">custom:</label>
+        <input type="text" id="custom" name="custom" style="width:100%;"
+               onchange="changeCustom(this)"></div>
+    </div>
     <hr/>
-    <a href="./gridtile.html">Read how it works</a>
+    <a href="./gridtile.html">Read how it works</a><br/>
+    <a href="./rhombtile.html">Manual page</a>
   </div>
 
 <script src="https://pixijs.download/release/pixi.min.js"></script>
@@ -478,12 +486,20 @@
 
   const tiling = new Tiling(app.stage, new Multigrid(nsym, init), edge);
   if (options.gridColor) tiling.drawGrid = true;
+  let custom = document.getElementById("custom");
+  let customGrid = options.gridColor? options.gridColor : "";
   let predef = document.getElementById("predefined");
   let predefs = Array.from(predef.children).map(c => c.value);
   if (Array.isArray(theme)) {
     let edgeColor = theme.shift();
     theme = new TilePalette(edgeColor, theme, options);
     predef.selectedIndex = 0;
+    let cus = customGrid? customGrid + "+" : "";
+    cus += PIXI.utils.hex2string(theme.edgeColor);
+    theme.tileColors.forEach(c => {
+      cus += "-" + PIXI.utils.hex2string(c);
+    });
+    custom.value = cus;
   } else if (!themes[theme]) {
     theme = undefined;
     predef.selectedIndex = 0;
@@ -492,6 +508,7 @@
     theme = themes[theme];
     if (options) theme.applyOptions(options);
     predef.selectedIndex = (itheme < 0)? 0 : itheme;
+    if (customGrid) custom.value = customGrid;
   }
   if (theme) tiling.palette = theme;
   tiling.pan(width/2, height/2);
@@ -707,6 +724,36 @@
       delete options.showIndex;
     }
     theme.applyOptions(options);
+    tiling.draw();
+  }
+  function changeCustom(custom) {
+    let [g, e] = custom.value.split("+");
+    if (e === undefined) {
+      e = g.split("-");
+      if (e.length > 1) g = undefined;
+      else e = undefined;
+    } else {
+      e = e.split("-");
+    }
+    if (g && !isNaN(intColor(g))) {
+      customGrid = g;
+      tiling.palette.gridColor = intColor(g);
+    }
+    if (e) {
+      let cols = e;
+      e = cols.shift();
+      if (!isNaN(intColor(e))) {
+        tiling.palette.edgeColor = intColor(e);
+      }
+      cols = cols.map(c => intColor(c));
+      if (cols.length > 4 && cols.every(c => !isNaN(c))) {
+        tiling.palette.tileColors = cols;
+        options.bright = false;
+        options.flip = false;
+        document.getElementById("reverse").checked = false;
+        document.getElementById("flip").checked = false;
+      }
+    }
     tiling.draw();
   }
 

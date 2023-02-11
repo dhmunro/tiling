@@ -1,12 +1,17 @@
 <!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <title>Rhomb Tilings Dual to Multigrids</title>
+  <title>Guide for rhomb tiling explorer</title>
   <meta name="description"
-    content="Explore aperiodic tilings dual to multigrids.">
+    content="A guide to all the features of the rhomb tiling page.">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script>MathJax = {tex: { inlineMath: [["$", "$"], ["\\(", "\\)"]] }};
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]]
+      }
+    };
   </script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"
           id="MathJax-script">
@@ -20,8 +25,6 @@
         padding: 0;
         font-family: 'Merriweather', serif;
         /* font-family: 'Merriweather Sans', sans-serif; */
-        font-size: 14pt;
-        overflow: hidden;
     }
 
     .unselectable {
@@ -30,679 +33,106 @@
         user-select: none; /* Standard syntax */
     }
 
-    h2 {
-        font-size: 125%;
+    div {
+      -moz-box-sizing: border-box;
+      box-sizing: border-box;
     }
-
-    #intro {
-        position: absolute;
-        width: 350px;
-        padding: 20px;
-        margin: 0;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        border-radius: 50px;
-        background: #eee;
-        font-size: 20pt;
-        transition: opacity 2s;
-    }
-
-    #menu {
-        position: absolute;
-        box-sizing: border-box;
-        width: 75%;
-        max-width: 400px;
-        padding: 15px;
-        margin: 0;
-        top: 0;
-        right: 0%;
-        transform: translate(400px, 0);
-        background: #eee;
-        transition: transform 0.5s;
-    }
-
-    #menu .close-x {
-        position: absolute;
-        top: 10px;
-        right: 6px;
-    }
-    .close-x {
-        position: relative;
-        width: 40px;
-        height: 30px;
-        cursor: pointer;
-    }
-    .close-x::before, .close-x::after {
-        content: " ";
-        display: block;
-        position: absolute;
-        left: 0;
-        top: 12px;
-        height: 6px;
-        width: 100%;
-        border-radius: 6px;
-        background-color: darkslategray;
-    }
-    .close-x::before {
-        transform: rotate(45deg);
-    }
-    .close-x::after {
-        transform: rotate(-45deg);
-    }
-
-    .button {
-        background-color: #ddd;
-        color: darkslategray;
-        border: 3px solid darkslategray;
-        border-radius: 12px;
-        padding: 5px 15px;
-        margin: 0 20px;
-        display: inline-block;
-        vertical-align: middle;
-        text-align: center;
-        cursor: pointer;
-    }
-
-    .button img {
-        display: block;
-        width: 22px;
-        height: 22px;
-        margin: auto;
-    }
-
-    input, select {
-        font-size: 14pt;
+    .textcolumn {
+      padding-left: 1em;
+      padding-right: 1em;
+      min-width: 22em;
+      max-width: 52em;
+      margin: 0 auto;
     }
 
   </style>
 </head>
 
 <body>
+<div class="textcolumn">
+  <h1>Guide for rhomb tiling explorer</h1>
 
-  <canvas id="pixi"></canvas>
+  <h2>Interactive controls</h2>
 
-  <div id="intro" class="unselectable" style="opacity: 0.8;">
-    <p style="text-align: center">Drag to pan</p>
-    <p style="text-align: center">Wheel/Pinch to zoom</p>
-    <p style="text-align: center">Double Click for more</p>
-  </div>
+  <ul>
+    <li>Drag with mouse or touch scrolls vertically or horizontally.</li>
+    <li>Mouse wheel or pinch gesture zooms in or out.</li>
+    <li>Double click pops up control panel.  Click the X at its upper
+      right corner to close the controls.</li>
+  </ul>
 
-  <div id="menu" class="unselectable">
-    <div class="close-x" onclick="closeMenu()"></div>
-    <h2>Multigrid Rhomb Tilings</h2>
-    <hr/>
-    <p>Interactions:<br/>&nbsp;&nbsp;&nbsp;
-      Drag, Wheel or Pinch, Double click</p>
-    &nbsp;&nbsp;&nbsp;or<div class="button" onclick="tiling.zoom(1.25)">
-        <img src="magnifying-glass-plus.svg"></img></div>
-      Zoom
-      <div class="button" onclick="tiling.zoom(1/1.25)">
-        <img src="magnifying-glass-minus.svg"></img></div>
-      here
-    <hr/>
-    <p>Patterns:</p>
-    <div style="display: inline; margin: 0 10px;">
-      <label for="nsym">nsym:</label>
-      <input type="number" id="nsym" name="nsym"
-             style="width: 45px;" min="4" max="99"
-             onchange="changeNsym(this)"
-             onkeypress="return digitOnly(event, 99)"></div>
-    <div style="display: inline; margin: 0 10px;">
-      <label for="center">spokes:</label>
-      <input type="checkbox" id="center" name="center"
-             onchange="changeCenter(this)"></div>
-    <div style="display: inline; margin: 0 10px;">
-      <label for="grid">grid:</label>
-      <input type="checkbox" id="grid" name="grid"
-             onchange="changeGrid(this)"></div>
-    <hr/>
-    <p>Colors:</p>
-    <div style="display: inline; margin: 0 10px;">
-      <label for="predefined">predefined:</label>
-      <select id="predefined" id="predefined"
-              onchange="changePalette(this)">
-        <option value="" hidden="hidden">- custom -</option>
-        <option value="blues">blues</option>
-        <option value="browns">browns</option>
-        <option value="greens">greens</option>
-        <option value="pinks">pinks</option>
-        <option value="purples">purples</option>
-        <option value="pastels">pastels</option>
-        <option value="greenbrown">greenbrown</option>
-        <option value="pinkpeach">pinkpeach</option>
-        <option value="bluebrick">bluebrick</option>
-        <option value="purpleblue">purpleblue</option>
-        <option value="beigeaqua">beigeaqua</option>
-        <option value="tealbrick">tealbrick</option>
-        <option value="darkgreens">darkgreens</option>
-      </select>
-    </div>
-    <br/>
-    <div style="padding-top: 5px">
-      <div style="display: inline; margin: 0 10px;">
-        <label for="reverse">reverse:</label>
-        <input type="checkbox" id="reverse" name="reverse"
-               onchange="changeReverse(this)"></div>
-      <div style="display: inline; margin: 0 10px;">
-        <label for="flip">swap:</label>
-        <input type="checkbox" id="flip" name="flip"
-               onchange="changeFlip(this)"></div>
-      <div style="display: inline; margin: 0 10px;">
-        <label for="index">index:</label>
-        <input type="checkbox" id="index" name="index"
-               onchange="changeIndex(this)"></div>
-    </div>
-  </div>
+  <h2>Control Panel</h2>
 
-<script src="https://pixijs.download/release/pixi.min.js"></script>
-<script src="rhombtile.js"></script>
-<script>
+  <ul>
+    <li>Magnify buttons zoom in (+) or out (-) about the center of
+      the screen.  (Wheel or gesture zoom is centered at the touch
+      position.)</li>
+    <li>Fullscreen button enters or exits fullscreen mode.  This is a
+      great way to study the patterns without any distractions.</li>
+    <li>nsym spinner allows you to set the number of grid line
+      directions in the multigrid.  For even numbers, there are nsym/2
+      different rhomb shapes, always including a square; for odd nsym,
+      (nsym-1)/2 rhomb shapes.</li>
+    <li>spokes checkbox lets you look at a radially symmetric multigrid
+      as suggested by <a href="https://arxiv.org/abs/2004.10128">
+        Lutfalla</a> and implemented on the
+      <a href="https://github.com/aatishb/patterncollider">pattern
+        collider</a> page.  With spokes checkbox off, you get patterns
+      with grid phases chosen in a manner analogous to
+      <a href="https://arxiv.org/abs/1608.08215">Boyle</a>.  For the
+      nsym = 4, 5, and 6 cases, the no-spokes are the well-known
+      self-similar tilings, while the spokes patterns are not.</li>
+    <li>grid checkbox toggle visibility of the multigrid
+      itself.</li>
+    <li>predefined menu lets you select one of several 5-color
+      palettes.</li>
+    <li>reverse checkbox reverses the order of palette colors</li>
+    <li>swap checkbox swaps colors 0 and 1, and colors 2 and 4.</li>
+    <li>index checkbox uses two colors for each of the two rhomb shapes
+      in the nsym=4 and 5 tilings, and for two of the three rhomb
+      shapes in the nsym=6 and 7 tilings, and does nothing for
+      larger nsym.  The extra colors generally are prettier, but may
+      make it more difficult to understand the pattern of shapes.</li>
+    <li>custom text box allows you to specify custom grid color, edge
+      color or tile palette colors.  The format is
+      grid+edge-color0-color1-color2-color3-color4...
+      The leading "grid+" is optional, but if there is no "+" or "-",
+      then the single color is taken to be the grid color.  You may
+      specify only "grid+edge" to only customize the grid and edge
+      colors.  You must specify at least five palette colors if you
+      specify any.  More than five colors are useful for nsym greater
+      than 11, otherwise they will not be seen.
+    </li>
+  </ul>
 
-  // Interpret URL query parameters
-  // debug=yes
-  // theme=themename  color palette (palette name, optional R, B, S suffix)
-  //    hex-hex-hex-hex-hex also recognized (like coolors.co)
-  // nsym=number   of edge directions (2*nsym-gons)
-  // init=random|perfect|zero|zeros    to get special gamma[j]
-  // grid=color    to overlay multigrid
-  // edge=number   length of edges
-  //
-  // tiling/rhombtile.html?nsym=8&theme=brownsR  nsym=8 works best with R
-  // tiling/rhombtile.html?nsym=9&theme=brownsB
-  // tiling/rhombtile.html?nsym=10&theme=browns
-  // tiling/rhombtile.html?nsym=11&theme=brownsB
-  // browns, blues, greens, pinks, purples all very similar
-  // for nsym < 8, just use default browns (or blues etc.)
-  // for nsym == 8, use R, e.g. brownsR
-  // for even nsym > 8, plain browns, blues, etc. best
-  // for odd nsym > 8, brownsB, bluesB, etc. best
-  //   but B makes little difference for large enough nsym
-  let urlQueries = location.search.replace("\?", "");
-  if (urlQueries) {
-    urlQueries = Object.fromEntries(urlQueries.split("&")
-                                    .map(q => q.split("=")));
-  } else {
-    urlQueries = {}
-  }
-  let debug = urlQueries.debug;
-  debug = debug? (debug!="no" && debug!="0" && debug!="false") : false;
-  if (urlQueries.scheme && rhombDefiners[urlQueries.scheme]) {
-    rhombDefs = rhombDefiners[urlQueries.scheme];
-  }
-  let init = urlQueries.init;
-  if (init) {
-    if (["random", "perfect", "zero", "zeros"].indexOf(init) < 0)
-      init = undefined;
-  }
-  let options = {};
-  if (urlQueries.grid) options.gridColor = urlQueries.grid;
-  let theme = urlQueries.theme;
-  if (!theme) theme = "blues";
-  {
-    let hexcodes = theme.split("-");
-    if (hexcodes.length < 6) {
-      if (theme.endsWith("B")) {
-        options.bright = true;
-        theme = theme.replace(/B$/, "");
-      }
-      if (theme.endsWith("S")) {
-        options.showIndex = true;
-        theme = theme.replace(/S$/, "");
-      }
-      if (theme.endsWith("R")) {
-        options.flip = true;
-        theme = theme.replace(/R$/, "");
-      }
-    } else {
-      hexcodes = hexcodes.map(h => PIXI.utils.string2hex(h));
-      if (hexcodes.every(h => Number.isInteger(h))) {
-        theme = hexcodes;
-      }
-    }
-  }
+  <h2>URL query parameters</h2>
 
-  let nsym = 5;
-  if (urlQueries.nsym && !isNaN(parseFloat(urlQueries.nsym))) {
-    nsym = parseFloat(urlQueries.nsym);
-  }
+  <p>You can add URL query parameters to the page address to initialize
+    the tiling with some pattern besides the default nsym=5 blue palette.
+    For example,
+    <a href="https://dhmunro.github.io/tiling?nsym=9&amp;theme=pastels">
+      dhmunro.github.io/tiling?nsym=9&amp;theme=pastels</a> sets nsym to 9
+    and selects the pastells color palette.  Recognized parameters are:
+  </p>
+  <ul>
+    <li>nsym=number</li>
+    <li>edge=number of pixels initial rhomb edge length sets initial
+      zoom level</li>
+    <li>init=perfect to set the spokes checkbox</li>
+    <li>grid=csscolor to set the grid checkbox, and also to set the
+      color of the grid lines</li>
+    <li>theme=palettename chooses initial color palette.  An optional
+      R suffix reverses the palette, an optional S suffix sets the
+      index checkbox, and an optional B suffix sets the swap checkbox.
+      (If there are multiple suffixes, they must appear in RSB order.)</li>
+    <li>theme=edge-color0-color1-color2-color3-color4... defines and
+      sets a custom palette.  The colors can be in hex rgb or rrggbb
+      form, or CSS color names like peachpuff or skyblue.  The first
+      is the edge color.  You must specify at least five palette colors
+      after the edge.  More colors will only begin to show up for
+      nsym greater than 11.</li>
+  </ul>
 
-  let width = window.innerWidth;
-  let height = window.innerHeight;
-  let edge = 40;
-  if (debug) {
-    width = height = 300;
-    edge = 140;
-  }
-  if (urlQueries.edge && !isNaN(parseFloat(urlQueries.edge))) {
-    edge = parseFloat(urlQueries.edge);
-  }
-  if (edge < 10) edge = 10;
-  if (edge > width/2) edge = width/2;
-  if (edge > height/2) edge = height/2;
-
-  const app = new PIXI.Application({width: width, height: height,
-                                    antialias: true,
-                                    view: document.getElementById("pixi")});
-  app.stage.interactive = true;
-  // texture = app.renderer.generateTexture(graphic);
-  // sprite = new PIXI.Sprite(texture);
-  // sprite.texture = anotherTexture;
-  //   also: x, y, parent  removeFromParent()
-  //         destroy({texture: true, baseTexture: true})
-
-  class Tiling {
-    constructor(stage, multigrid, edge) {
-      this.stage = stage;
-      this.grid = multigrid;
-      this.edge = edge;
-      this.graphics = new PIXI.Graphics();
-      stage.addChild(this.graphics);
-      this.drawGrid = false;
-      this._home = [edge, Array.from(multigrid.gamma)];
-      // this.rhombTextures = multigrid.pairs.map((_, ipair) => {
-      //   const verts = multigrid.rhombVerts([0, 0], ipair, edge);
-      //   const graphics = new PIXI.Graphics();
-      //   graphics.lineStyle(2, 0x808080);
-      //   graphics.beginFill(0xffcc00, 1);
-      //   graphics.drawPolygon(verts.flat());
-      //   graphics.endFill();
-      //   return app.renderer.generateTexture(graphics);
-      // });
-      // this.spareSprites = [];
-    }
-
-    draw() {
-      this.graphics.clear();
-      const box = [0, width, 0, height];
-      const liner = this.drawGrid?
-            (grid, pts, r, kr) => this.liner(grid, pts, r, kr) : null;
-      this.grid.crossLines(box, this.edge, (grid, v0, ipair, index) =>
-        this.tiler(grid, v0, ipair, index), liner);
-    }
-
-    pan(dx, dy) {
-      if (Array.isArray(dx)) [dx, dy] = dx;
-      this.grid.pan(dx, dy, this.edge);
-      this.draw();
-    }
-
-    zoom(factor, xcen, ycen) {
-      const edge = this.edge * factor;
-      if (edge < 10 || edge > Math.min(width, height)/2) return false;
-      if (xcen === undefined) {
-        xcen = width/2;
-        ycen = height/2;
-      } else if (Array.isArray(xcen)) {
-        [xcen, ycen] = xcen;
-      }
-      this.edge = edge;
-      this.pan((1-factor)*xcen, (1-factor)*ycen);
-      this.draw();
-    }
-
-    home() {
-      [this.edge, this.grid.gamma] = this._home;
-      this.draw();
-    }
-
-    tiler(grid, v0, ipair, index) {
-      // rhomb = new PIXI.Sprite(this.rhombTextures[ipair]);
-      // [rhomb.x, rhomb.y] = v0;
-      // this.stage.addChild(rhomb);
-      const verts = grid.rhombVerts(v0, ipair, this.edge);
-      const gr = this.graphics;
-      gr.lineStyle({width: 1.5, color: this.color(), miterLimit: 1});
-      gr.beginFill(this.color(grid, ipair, index), 1);
-      gr.drawPolygon(verts.flat());
-      gr.endFill();
-    }
-
-    liner(grid, pts, r, kr) {
-      const gr = this.graphics;
-      gr.lineStyle(1, this.palette? this.palette.gridColor : 0);
-      gr.moveTo(...pts[0]);
-      gr.lineTo(...pts[1]);
-    }
-
-    color(grid, ipair, index) {
-      if (!this.palette) return grid? 0xede1c2 : 0x8a962d;
-      return this.palette.color(grid, ipair, index);
-    }
-  }
-
-  class TilePalette {
-    constructor(edgeColor, tileColors, options) {
-      this.edgeColor = intColor(edgeColor);
-      if (tileColors.length < 5) {
-        throw new Error("palettes need at least five colors");
-      }
-      this.tileColors = tileColors.map(c => intColor(c));
-      this.applyOptions(options);
-    }
-
-    applyOptions(options) {
-      let {gridColor, showIndex, bright, flip} = options? options : {};
-      this.gridColor = intColor(gridColor? gridColor : "#000");
-      this.showIndex = showIndex;
-      if (bright) {
-        let [c0, c1, c2, c3, c4, ...rest] = this.tileColors;
-        this.tileColors = [c1, c0, c2, c4, c3, ...rest];
-      }
-      if (flip) {
-        let [c0, c1, c2, c3, c4, ...rest] = this.tileColors;
-        this.tileColors = [c4, c3, c2, c1, c0, ...rest];
-      }
-    }
-
-    color(grid, ipair, index) {
-      if (!grid) return this.edgeColor;
-      let nsym = grid.zeta.length;
-      index = (index > nsym/2 - 1);
-      let [,,,,, iColor] = grid.pairs[ipair];
-      // let nColors = grid.bases.length;
-      // Using base angles for coloring does not work for even nsym
-      // - it just picks out a few orientations to highlight.
-      let nColors = grid.nshapes;
-      iColor = grid.shapes[iColor];
-      if (nColors == 2) {
-        if (!this.showIndex) {
-          iColor = [0, 4][iColor];
-        } else {
-          iColor = index? [0, 4][iColor] : [1, 3][iColor];
-        }
-      } else if (nColors == 3) {
-        if (!this.showIndex) {
-          iColor = [0, 2, 4][iColor];
-        } else {
-          iColor = index? [0, 2, 4][iColor] : [1, 2, 3][iColor];
-        }
-      } else if (nColors == 4) {
-        iColor = [0, 1, 3, 4][iColor];
-      } else {
-        iColor = iColor % this.tileColors.length;
-      }
-      let color = this.tileColors[iColor];
-      if (nColors > 2 && this.showIndex) {
-        // TODO: somehow enhance color depending on index
-      }
-      return color;
-    }
-  }
-
-  function intColor(c) {
-    return Number.isInteger(c)? c : PIXI.utils.string2hex(c);
-  }
-
-  // The greenbrown palette shows the hex tiles (three fused 60 degree
-  // rhombs) which feture prominently in all the nsym divisible by 3
-  // tillings.  Use the following palettes to show the progression:
-  // nsym=6&theme=888-ccd5ae-e9edc9-d4a373-faedcd-fefae0
-  // nsym=9&theme=888-e9edc9-faedcd-fefae0-d4a373-ccd5ae
-  // nsym=12&theme=888-greenbrownB
-  // nsym=15&theme=888-greenbrown
-  // nsym=18&theme=888-greenbrownR
-  // nsym=21&theme=888-ccd5ae-e9edc9-faedcd-fefae0-e9edc9-faedcd-d4a373
-  // nsym=24&theme=888-ccd5ae-e9edc9-faedcd-fefae0-ccd5ae-e9edc9-faedcd-d4a373
-  const themes = {
-    browns: new TilePalette("#888", ["#edede9", "#d6ccc2", "#f5ebe0",
-                                     "#e3d5ca", "#d5bdaf"]),
-    blues: new TilePalette("#888", ["#e8e8ed", "#c3cdd6", "#dfe9f5",
-                                    "#cad8e3", "#b0c8d6"]),
-    greens: new TilePalette("#888", ["#e8edea", "#c4d6c3", "#e0f5df",
-                                     "#cde3ca", "#b7d6b0"]),
-    purples: new TilePalette("#888", ["#ede8ed", "#cec3d6", "#ecdff5",
-                                      "#d7cae3", "#c2b0d6"]),
-    pinks: new TilePalette("#888", ["#f2e9e3", "#e1b7b9", "#f8dddf",
-                                    "#ebc2c6", "#e1a3ae"]),
-    pastels: new TilePalette("#888", ["#ffc09f", "#ffee93", "#fcf5c7",
-                                      "#a0ced9", "#adf7b6"]),
-    pinkpeach: new TilePalette("#888", ["#ffb5a7", "#fcd5ce", "#f8edeb",
-                                        "#f9dcc4", "#fec89a"]),
-    greenbrown: new TilePalette("#888", ["#ccd5ae", "#e9edc9", "#fefae0",
-                                         "#faedcd", "#d4a373"]),
-    bluebrick: new TilePalette("#888", ["#66b8d9", "#8bc3d9", "#d9c0ba",
-                                        "#d99f6c", "#d98673"]),
-    purpleblue: new TilePalette("#888", ["#de91b5", "#d293c2", "#bca3d6",
-                                         "#a6b7de", "#91bfde"]),
-    beigeaqua: new TilePalette("#888", ["#b09e99", "#fee9e1", "#fad4c0",
-                                        "#c0fdfb", "#64b6ac"]),
-    tealbrick: new TilePalette("#888", ["#006d77", "#83c5be", "#edf6f9",
-                                        "#ffddd2", "#e29578"]),
-    darkgreens: new TilePalette("#888", ["#edeec9", "#dde7c7", "#bfd8bd",
-                                         "#98c9a3", "#77bfa3"]),
-  };
-
-  const tiling = new Tiling(app.stage, new Multigrid(nsym, init), edge);
-  if (options.gridColor) tiling.drawGrid = true;
-  let predef = document.getElementById("predefined");
-  let predefs = Array.from(predef.children).map(c => c.value);
-  if (Array.isArray(theme)) {
-    let edgeColor = theme.shift();
-    theme = new TilePalette(edgeColor, theme, options);
-    predef.selectedIndex = 0;
-  } else if (!themes[theme]) {
-    theme = undefined;
-    predef.selectedIndex = 0;
-  } else {
-    let itheme = predefs.indexOf(theme);
-    theme = themes[theme];
-    if (options) theme.applyOptions(options);
-    predef.selectedIndex = (itheme < 0)? 0 : itheme;
-  }
-  if (theme) tiling.palette = theme;
-  tiling.pan(width/2, height/2);
-
-  window.addEventListener("resize", () => {
-    [width, height] = [window.innerWidth, window.innerHeight];
-    app.renderer.resize(width, height);
-    tiling.draw();
-  });
-
-  let dragging, gesturing;
-  app.stage.on("pointerdown", (event) => {
-    if (Array.isArray(gesturing)) {
-      dragging = gesturing = undefined;
-      return;
-    } else if (dragging) {
-      gesturing = [gesturing, event.pointerId, event.clientX, event.clientY];
-    } else {
-      dragging = [event.clientX, event.clientY];
-      gesturing = event.pointerId;
-    }
-  });
-  app.stage.on("pointermove", (event) => {
-    if (!dragging) return;
-    if (!Array.isArray(gesturing)) {  // dragging
-      const [x0, y0] = dragging;
-      const [x, y] = [event.clientX, event.clientY];
-      dragging = [x, y];
-      tiling.pan(x-x0, y-y0);
-    } else {  // pinch gesture
-      const [xa0, ya0] = dragging;
-      const [ida, idb, xb0, yb0] = gesturing;
-      let [xa1, ya1, xb1, yb1] = [xa0, ya0, xb0, yb0];
-      const isa = event.pointerId == ida;
-      if (isa) {
-        [xa1, ya1] = [event.clientX, event.clientY];
-      } else if (event.pointerId == idb) {
-        [xb1, yb1] = [event.clientX, event.clientY];
-      } else {
-        dragging = gesturing = undefined;
-        return;  // cancel zoom
-      }
-      let r20 = (xa0 - xb0)**2 + (ya0 - yb0)**2;
-      let r21 = (xa1 - xb1)**2 + (ya1 - yb1)**2;
-      let factor = r21 / (r20 + 1.e-30);
-      if (factor > 20 || factor < 0.05) {
-        dragging = gesturing = undefined;
-        return;  // cancel zoom
-      }
-      if (factor > 0.992 && factor < 1.008) return;  // skip tiny changes
-      if (isa) dragging = [xa1, ya1];
-      else gesturing.splice(2, 2, xb1, yb1);
-      tiling.zoom(Math.sqrt(factor), 0.5*(xa1 + xb1), 0.5*(ya1 + yb1));
-    }
-  });
-  const stopDragging = () => { dragging = gesturing = undefined; };
-  app.stage.on("pointerup", stopDragging);
-  app.stage.on("pointercancel", stopDragging);
-  app.stage.on("pointerleave", stopDragging);
-  app.stage.on("pointerout", stopDragging);
-
-  app.stage.on("wheel", (event) => {
-    let [xcen, ycen] = [event.clientX, event.clientY];
-    let [dx, dy] = [event.deltaX, event.deltaY];
-    // Some browsers treat skiftKey as horizontal scroll
-    if (dy === 0 && event.shiftKey) [dx, dy] = [dy, dx];
-    if (dy > 0) {
-      // pull top of wheel toward yourself (scroll down)
-      // scroll down --> zoom out
-      tiling.zoom(1/1.05, xcen, ycen);
-    } else if (dy < 0) {
-      // push top of wheel away from yourself (scroll down)
-      // scroll up --> zoom in
-      tiling.zoom(1.05, xcen, ycen);
-    }
-  });
-  // github.com/pixijs/pixi.js/wiki/v5-Hacks#prevent-pinch-gesture-in-chrome
-  // add prevent default event listener only to app canvas (rather than window)
-  app.view.addEventListener("wheel", e=>{
-    e.preventDefault();
-  }, {passive: false});
-
-  let clicking;
-  app.stage.on("click", () => {
-    // triggers on mouse up after any drag
-    if (clicking) {
-      clearTimeout(clicking);
-      clicking = undefined;
-      // Double click activates overlay menu
-      openMenu();
-    } else {
-      clicking = setTimeout(() => {
-        clicking = undefined;
-      }, 600);  // 600 ms double click detection delay
-    }
-  });
-
-  // Fade out the intro div.
-  const intro = document.getElementById("intro");
-  intro.addEventListener("transitionend", (e) => {
-    intro.style.display = "none";
-  }, true);
-  setTimeout(() => {
-    intro.style.opacity = 0;
-  }, 4000);
-
-  const menu = document.getElementById("menu");
-
-  const openMenu = () => {
-    menu.style.transform = "translate(0, 0)";
-  };
-
-  const closeMenu = () => {
-    menu.style.transform = "translate(400px, 0)";
-  };
-
-  document.getElementById("nsym").value = nsym;
-  function changeNsym(input) {
-    let value = Number.parseInt(input.value);
-    if (value < 4 || value > 99) input.value = value = nsym;
-    if (value == nsym) return;
-    nsym = value;
-    tiling.grid = new Multigrid(nsym, init);
-    tiling.pan(width/2, height/2);
-  }
-  function digitOnly(event, maxValue) {
-    let digit = String.fromCharCode(event.keyCode);
-    if (isNaN(digit)) return false;
-    let value = event.target.value;
-    if (!value && digit=="0") return false;
-    value = Number.parseInt(value + digit)
-    return value <= maxValue;
-  }
-
-  document.getElementById("center").checked = (init == "perfect");
-  function changeCenter(input) {
-    let newInit = input.checked? "perfect" : undefined;
-    if (init == newInit) return;
-    init = newInit;
-    tiling.grid = new Multigrid(nsym, init);
-    tiling.pan(width/2, height/2);
-  }
-  document.getElementById("grid").checked = options.gridColor? true : false;
-  let gridColor = options.gridColor;
-  if (!gridColor) gridColor = "#000";
-  function changeGrid(input) {
-    if (input.checked) {
-      if (tiling.drawGrid) return;
-      options.gridColor = gridColor;
-      tiling.palette.gridColor = intColor(gridColor? gridColor : "#000");
-      tiling.drawGrid = true;
-      tiling.draw();
-    } else {
-      if (!tiling.drawGrid) return;
-      gridColor = options.gridColor;
-      tiling.drawGrid = false;
-      tiling.draw();
-    }
-  }
-
-  function changePalette(selector) {
-    if (!selector.value) return;
-    let newTheme = themes[selector.value];
-    if (!newTheme) {  // only if select options disagree with themes
-      selector.selectedIndex = 0;
-      return;
-    }
-    if (theme === newTheme) return;
-    theme = newTheme;
-    if (options) theme.applyOptions(options);
-    tiling.palette = theme;
-    tiling.draw();
-  }
-
-  document.getElementById("reverse").checked = options.flip? true : false;
-  document.getElementById("flip").checked = options.bright? true : false;
-  document.getElementById("index").checked = options.showIndex? true : false;
-  function changeReverse(input) {
-    let flip = options.flip;
-    if (input.checked) {
-      if (flip) return;
-    } else {
-      if (!flip) return;
-    }
-    options.flip = true;
-    theme.applyOptions(options);
-    if (!input.checked) delete options.flip;
-    tiling.draw();
-  }
-  function changeFlip(input) {
-    let bright = options.bright;
-    if (input.checked) {
-      if (bright) return;
-    } else {
-      if (!bright) return;
-    }
-    options.bright = true;
-    theme.applyOptions(options);
-    if (!input.checked) delete options.bright;
-    tiling.draw();
-  }
-  function changeIndex(input) {
-    if (input.checked) {
-      if (options.showIndex) return;
-      options.showIndex = true;
-    } else {
-      if (!options.showIndex) return;
-      delete options.showIndex;
-    }
-    theme.applyOptions(options);
-    tiling.draw();
-  }
-
-</script>
-
+</div>
 </body>
 </html>
