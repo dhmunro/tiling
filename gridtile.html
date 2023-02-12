@@ -61,8 +61,6 @@
 <div class="textcolumn">
   <h1>Multigrid Generation of Aperiodic Tilings</h1>
 
-  <p>Jump to <a href="#explorer">Explore Multigrid Tilings</a>.</p>
-
   <h2>Basic Concepts</h2>
 
   <p>The Penrose tiling is the classic aperiodic tiling of the plane.
@@ -287,7 +285,13 @@
     tiling) - not an intersection point in the multigrid.  A set of
     $k_j$ values may be shared by different intersection points in
     separate $(r, s)$ lattices, or by the corresponding different
-    rhombs in the tiling.
+    rhombs in the tiling.</p>
+  <p>Since each rhomb shape corresponds to an $(r, s)$ pair, the
+    density of intersection points of that lattice determines the
+    density of that rhomb shape.  The ratio of these densities, in
+    turn, must equal the ratio of numbers of the corresponding rhomb
+    shapes.  The irrationality of these density ratios guarantees a
+    tiling is aperiodic.
   </p>
 
   <h2>Equally Spaced Multigrids</h2>
@@ -329,50 +333,97 @@
     non-integer value, it is unclear what happens - the tilings
     derived from such a pentagrid still look like Penrose tilings, but
     perhaps the edge matching conditions can occasionally fail.</p>
-  <p>What is the analogous vertex labeling function for even $n$?</p>
-  <hr/>
-  <h2 id="explorer">Explore Multigrid Tilings</h2>
-  <p>You can drag the following tilings with the mouse or your finger,
-    and you can zoom in or out with the mouse wheel or pinch gestures.</p>
-  <ul>
-    <li><a href="./index.html">
-        Penrose tiling (5-fold symmetry, self-similar)</a></li>
-    <li><a href="./index.html?nsym=4&theme=blues">
-        Ammann-Beenker tiling (8-fold symmetry, self-similar)</a></li>
-    <li><a href="./index.html?nsym=6">
-        Socolar tiling (12-fold symmetry, self-similar)</a></li>
-    <li><a href="./index.html?nsym=7&theme=greens">
-        Tiling with 7-fold symmetry</a></li>
-    <li><a href="./index.html?nsym=8&theme=pinks">
-        Tiling with 16-fold symmetry</a></li>
-    <li><a href="./index.html?nsym=8&edge=20&theme=purples">
-        Tiling with 9-fold symmetry</a></li>
-    <li><a href="./index.html?nsym=24&edge=20">
-        Tiling with 48-fold symmetry</a></li>
-    <li><a href="./index.html?nsym=15&edge=20&init=perfect&theme=greenbrown">
-        Tiling with 15-fold symmetry, symmetry centered</a></li>
-  </ul>
-  <p>You may notice that for all $n$ which are multiples of 3, the 60
-    degree rhomb tiles are always fused into a single hex tile.  (For
-    random $\gamma_j,$ these rhombs are not always fused - only for
-    the default initialization.)  To watch this remarkable
-    progression, try the following:</p>
-  <ul>
-    <li><a href="./index.html?edge=20&nsym=6&theme=888-ccd5ae-e9edc9-d4a373-faedcd-fefae0">
-        nsym=6</a></li>
-    <li><a href="./index.html?edge=20&nsym=9&theme=888-e9edc9-faedcd-fefae0-d4a373-ccd5ae">
-        nsym=9</a></li>
-    <li><a href="./index.html?edge=20&nsym=12&theme=greenbrownB">
-        nsym=12</a></li>
-    <li><a href="./index.html?edge=20&nsym=15&theme=greenbrown">
-        nsym=15</a></li>
-    <li><a href="./index.html?edge=20&nsym=18&theme=greenbrownR">
-        nsym=18</a></li>
-    <li><a href="./index.html?edge=20&nsym=21&theme=888-ccd5ae-e9edc9-faedcd-fefae0-e9edc9-faedcd-d4a373">
-        nsym=21</a></li>
-    <li><a href="./index.html?edge=20&nsym=24&theme=888-ccd5ae-e9edc9-faedcd-fefae0-ccd5ae-e9edc9-faedcd-d4a373">
-        nsym=24</a></li>
-  </ul>
+  <p>What is the analogous vertex labeling function for even $n$?
+    When you impose the $\sum_j\gamma_j=0$ restriction for even $n$,
+    the index $I(\VEC{x})$ is again between $0$ and $n$ (non-inclusive),
+    but it is no longer restricted to an integer value, since
+    $\sum_j\ZETA_j\ne 0$ in this case.  However, the values of
+    $$I(\VEC{x})$ at the four corners of every rhomb still differ
+    by exactly $1$ for corners connected by a rhomb edge.</p>
+  <p>The quantities $\sum_j\gamma_j$ and
+    $\ETA=\sum_j\gamma_j\,\ZETA_j$ are the zeroth and first Fourier
+    components (interpreted as complex numbers) of the real sequence
+    $\gamma_j.$ Specifically, this is a discrete Fourier transform on
+    $n$ elements for odd $n$, or $2n$ elements for even $n$.  In the
+    even $n$ case, the grid line equations $\ZETA_j\cdot\VEC{x}
+    +\gamma_j=k_j$ show that the second half of the $2n$ DFT
+    components must be $\gamma_{n+j}=-\gamma_j,$ since
+    $\ZETA_{n+j}=-\ZETA_j.$</p>
+  <p>The $k$th element of the DFT is
+
+    \[ \XI_k = \sum_{j=0}^{N-1}\gamma_j\ZETA_{kj}, \]
+
+    where $n=n$ for odd $n$, $N=2N$ for even $n.$ Since the $\gamma_j$
+    are real, $\XI_{-k}=\overline{\XI_{k}}.$ (Here the overline means
+    complex conjugate.)  For even $n,$ $\XI_k=$ for all even $k$ since
+    $\gamma_{n+j}=-\gamma_j.$  Furthermore, for odd $k$, the second set
+    of $n$ terms in the sum on $j$ exactly equals the first $n$ terms,
+    because $\ZETA_n=-1$ for even $n.$  Therefore, we will renormalize
+    the DFT coefficients for even $n$ by a factor of two so that for
+    all $n$ we define
+
+    \[ \XI_k = \sum_{j=0}^{n-1}\gamma_j\ZETA_{kj}. \]
+
+    For even $n,$ this formula is only valid for odd $k$; for even $k,$
+    $\XI_k=0$ from our consideration of the full DFT sum.  For odd $n$
+    all values of $k$ for $\XI_k$ are valid, but we need only consider
+    $k\lt n/2$ because the other half are simply complex conjugates.</p>
+  <p>We have already noted that $\ETA=\XI_1$ represents a simple
+    displacement of the grid, while the condition that $\XI_0=0$ was
+    important in our discussion of the index function.</p>
+  <p>The inverse DFT for odd $n$ is
+
+    \[ \begin{eqnarray*}
+    \gamma_j &=& \tfrac{1}{n}\sum_{k=0}^{(n-1)/2}(\XI_k\ZETA_{-kj}
+                 +\overline{\XI_k}\ZETA_{kj}) \\
+    &=& \tfrac{1}{n}(\XI_0 + 2\sum_{k=1}^{(n-1)/2}\XI_k\cdot\ZETA_{kj}).
+    \end{eqnarray*} \]
+
+    Only half of the $\XI_k$ are required in the sum; their real and
+    imaginary parts contain twice as much information as the original
+    $\gamma_k$, and $\XI_0$ is real.</p>
+  <p>The inverse DFT for even $n$ is (remembering we have reduced the
+    DFT $\XI_k$ by a factor of two, so the denominator is $n$ instead
+    of $N=2n$):
+
+    \[ \begin{eqnarray*}
+    \gamma_j &=& \tfrac{1}{n}\sum_{k=0}^{n-1}(\XI_k\ZETA_{-kj}
+                 +\overline{\XI_k}\ZETA_{kj}) \\
+    &=& \tfrac{2}{n}\sum_{k=1}^{n-1}\XI_k\cdot\ZETA_{kj}.
+    \end{eqnarray*} \]
+
+    Remember that $\XI_k=0$ for even $k$ (including $k=0$), so the sum
+    contains only odd $k.$ With their real and imaginary parts these
+    odd $\XI_k$ have the same number of degrees of freedom as the
+    original $\gamma_j.$</p>
+  <p><a href="https://arxiv.org/abs/1608.08215">Boyle</a> has an
+    extraordinarily detailed analysis of the $n$ equals 4, 5, and 6
+    cases, in which he proves that the self-similar Ammann-Beenker,
+    Penrose, and Socolar tilings, respectively, can be represented by
+    multigrids precisely when the $\gamma_j$ have $\XI_k$ which are
+    non-zero only for $k=1$ and $k=(n-1)/2$ for odd $n$ ($n=5$) or
+    only for $k=1$ and $k=n-1$ for even $k.$ Here, I adopt this
+    constraint for initializing equally spaced multigrids
+    for <em>all</em> values of $n.$ Adding non-zero $\XI_k$ for other
+    values of $k$ than these often produces distinctly different kinds
+    of vertices in the tiling pattern.  Somehow these Fourier
+    decompositions of the $\gamma_j$ seem to be significant beyond the
+    $n=6$ case.</p>
+  <p>The case of $n$ being a multiple of three is an example of how
+    other Fourier coefficients affect the kinds of vertices which
+    appear in the tilings.  These tilings all include a 60 degree
+    rhomb.  It is not difficult to prove that as long as $\XI_k=0$ for
+    all $k$ which are multiples of three (again assuming $n$ is a
+    multiple of three), all the 60 degree rhombs in the tiling will
+    meet at one of their 120 degree angles to form hexagons.</p>
+  <p>The case of $n=2$ is just a periodic square tiling.  The case of
+    $n=3$ is always a periodic triangular multigrid producing a
+    periodc tiling of 60 degree rhombs.  Apparently, the reason that
+    $n=4$ and $n=6$ have their additional self-similar structure is
+    that they represent an overlay of exactly two of these periodic
+    lattices.  The $n=5% case also has only two different lattice
+    angles.  Larger $n$ have more different kinds of periodic lattices
+    overlaid.</p>
 </div>
 </body>
 </html>
