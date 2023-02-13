@@ -178,6 +178,8 @@
         <option value="beigeaqua">beigeaqua</option>
         <option value="tealbrick">tealbrick</option>
         <option value="darkgreens">darkgreens</option>
+        <option value="brownblue">brownblue</option>
+        <option value="grayred">grayred</option>
       </select>
     </div>
     <br/>
@@ -497,6 +499,14 @@
                                         "#ffddd2", "#e29578"]),
     darkgreens: new TilePalette("#888", ["#edeec9", "#dde7c7", "#bfd8bd",
                                          "#98c9a3", "#77bfa3"]),
+    brownblue: new TilePalette("#888", ["#eddcd2", "#fff1e6", "#fde2e4",
+                                        "#fad2e1", "#c5dedd", "#dbe7e4",
+                                        "#f0efeb", "#d6e2e9", "#bcd4e6",
+                                        "#99c1de"]),
+    grayred: new TilePalette("#888", ["#e2e2df", "#d2d2cf", "#e2cfc4",
+                                      "#f7d9c4", "#faedcb", "#c9e4de",
+                                      "#c6def1", "#dbcdf0", "#f2c6de",
+                                      "#f9c6c9"]),
   };
   // Additional nice palettes from https://coolors.co/
   // pink-to-peach
@@ -507,10 +517,6 @@
   //   https://coolors.co/edede9-d6ccc2-f5ebe0-e3d5ca-d5bdaf
   // light blues
   //   https://coolors.co/edf2fb-e2eafc-d7e3fc-ccdbfd-c1d3fe-b6ccfe-abc4ff
-  // light pastels brown-blue
-  //   eddcd2-fff1e6-fde2e4-fad2e1-c5dedd-dbe7e4-f0efeb-d6e2e9-bcd4e6-99c1de
-  // light pastels gray-red
-  //   e2e2df-d2d2cf-e2cfc4-f7d9c4-faedcb-c9e4de-c6def1-dbcdf0-f2c6de-f9c6c9
 
   const tiling = new Tiling(app.stage, new Multigrid(nsym, init), edge);
   if (options.gridColor) tiling.drawGrid = true;
