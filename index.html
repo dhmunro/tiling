@@ -59,7 +59,8 @@
         top: 0;
         right: 0;
         background: #eee;
-        overflow: auto;
+        overflow-x: hidden;
+        overflow-y: auto;
     }
 
     #menu .close-x {
@@ -236,8 +237,11 @@
   } else {
     urlQueries = {}
   }
-  let debug = urlQueries.debug;
-  debug = debug? (debug!="no" && debug!="0" && debug!="false") : false;
+  function asBool(value) {
+    if (!value) return false;
+    return ["no", "NO", "false", "FALSE", "0"].indexOf(value) < 0;
+  }
+  let debug = asBool(urlQueries.debug);
   if (urlQueries.scheme && rhombDefiners[urlQueries.scheme]) {
     rhombDefs = rhombDefiners[urlQueries.scheme];
   }
@@ -247,6 +251,9 @@
       init = undefined;
   }
   let options = {};
+  // Make reordering odd palettes the default behavior
+  if ((urlQueries.reorder === undefined) ||
+      asBool(urlQueries.reorder)) options.reorder = true;
   if (urlQueries.grid) options.gridColor = urlQueries.grid;
   let theme = urlQueries.theme;
   if (!theme) theme = "blues";
@@ -393,17 +400,21 @@
     }
 
     applyOptions(options) {
-      let {gridColor, showIndex, bright, flip} = options? options : {};
+      let {gridColor, showIndex, bright, flip, reorder} = options? options : {};
       this.gridColor = intColor(gridColor? gridColor : "#000");
       this.showIndex = showIndex;
       if (bright) {
-        let [c0, c1, c2, c3, c4, ...rest] = this.tileColors;
-        this.tileColors = [c1, c0, c2, c4, c3, ...rest];
+        let cols = this.tileColors;
+        for (let i=0; i<cols.length-1 ; i+=2) {
+          if (2*i + 1 == cols.length) {
+            i -= 1;
+            continue;
+          }
+          [cols[i], cols[i+1]] = [cols[i+1], cols[i]];
+        }
       }
-      if (flip) {
-        let [c0, c1, c2, c3, c4, ...rest] = this.tileColors;
-        this.tileColors = [c4, c3, c2, c1, c0, ...rest];
-      }
+      if (flip) this.tileColors.reverse();
+      this.reorder = reorder? true : false;
     }
 
     color(grid, ipair, index) {
@@ -412,28 +423,37 @@
       index = (index > nsym/2 - 1);
       let [,,,,, iColor] = grid.pairs[ipair];
       // let nColors = grid.bases.length;
-      // Using base angles for coloring does not work for even nsym
-      // - it just picks out a few orientations to highlight.
+      // For even nsym: Using base angles for coloring does not work
+      //   - it just picks out a few orientations to highlight.
+      // For odd nsym: grid.shapes ordering considers the half-integer
+      //   acute rhomb angles to be obtuse rhombs, so in acute angle
+      //   order, the rhomb shapes alternate.  For example with nsym=9,
+      //   with angle a=180/9, iColor order is [2a, 4a, 5a, 3a, a].
       let nColors = grid.nshapes;
       iColor = grid.shapes[iColor];
+      if (this.reorder && (nsym % 2)) {
+        // Here we reorder grid.shapes to make the colors
+        // go in order of the acute rhomb angle.
+        if (2*iColor+1 < nColors) iColor = 2*iColor + 1;
+        else iColor = 2*(nColors - 1 - iColor);
+      }
+      let palette = this.tileColors;
+      let npal = palette.length;
       if (nColors == 2) {
-        if (!this.showIndex) {
-          iColor = [0, 4][iColor];
-        } else {
-          iColor = index? [0, 4][iColor] : [1, 3][iColor];
-        }
+        if (!this.showIndex) iColor = [0, 4][iColor];
+        else iColor = index? [0, 4][iColor] : [1, 3][iColor];
+        if (npal > 5) iColor = Math.floor(npal*(iColor + 0.5)/5);
       } else if (nColors == 3) {
-        if (!this.showIndex) {
-          iColor = [0, 2, 4][iColor];
-        } else {
-          iColor = index? [0, 2, 4][iColor] : [1, 2, 3][iColor];
-        }
+        if (!this.showIndex) iColor = [0, 2, 4][iColor];
+        else iColor = index? [0, 2, 4][iColor] : [1, 2, 3][iColor];
+        if (npal > 5) iColor = Math.floor(npal*(iColor + 0.5)/5);
       } else if (nColors == 4) {
         iColor = [0, 1, 3, 4][iColor];
+        if (npal > 5) iColor = Math.floor(npal*(iColor + 0.5)/5);
       } else {
-        iColor = iColor % this.tileColors.length;
+        iColor = iColor % npal;
       }
-      let color = this.tileColors[iColor];
+      let color = palette[iColor];
       if (nColors > 2 && this.showIndex) {
         // TODO: somehow enhance color depending on index
       }
@@ -444,6 +464,12 @@
   function intColor(c) {
     return Number.isInteger(c)? c : PIXI.utils.string2hex(c);
   }
+
+  // Palettes:
+  // For even n, thinnest rhomb gets first color, with color index increasing
+  //   with rhomb angle, until square rhomb.  No rhomb angles count as
+  //   being obtuse.
+  // For odd n, 
 
   // The greenbrown palette shows the hex tiles (three fused 60 degree
   // rhombs) which feture prominently in all the nsym divisible by 3
@@ -487,6 +513,7 @@
   const tiling = new Tiling(app.stage, new Multigrid(nsym, init), edge);
   if (options.gridColor) tiling.drawGrid = true;
   let custom = document.getElementById("custom");
+  custom.value = "";
   let customGrid = options.gridColor? options.gridColor : "";
   let predef = document.getElementById("predefined");
   let predefs = Array.from(predef.children).map(c => c.value);
@@ -495,9 +522,9 @@
     theme = new TilePalette(edgeColor, theme, options);
     predef.selectedIndex = 0;
     let cus = customGrid? customGrid + "+" : "";
-    cus += PIXI.utils.hex2string(theme.edgeColor);
+    cus += PIXI.utils.hex2string(theme.edgeColor).replace(/#/, "");
     theme.tileColors.forEach(c => {
-      cus += "-" + PIXI.utils.hex2string(c);
+      cus += "-" + PIXI.utils.hex2string(c).replace(/#/, "");
     });
     custom.value = cus;
   } else if (!themes[theme]) {
@@ -726,33 +753,61 @@
     theme.applyOptions(options);
     tiling.draw();
   }
-  function changeCustom(custom) {
-    let [g, e] = custom.value.split("+");
-    if (e === undefined) {
-      e = g.split("-");
-      if (e.length > 1) g = undefined;
-      else e = undefined;
-    } else {
-      e = e.split("-");
+  function reorderOddPalette(on) {
+    if (on && !options.reorder) {
+      options.reorder = tiling.palette.reorder = true;
+    } else if (options.reorder && !on) {
+      tiling.palette.reorder = false;
+      delete options.reorder;
     }
-    if (g && !isNaN(intColor(g))) {
+    if (tiling.grid.zeta.length % 2) tiling.draw();
+  }
+  function changeCustom(custom) {
+    let value = custom.value;
+    let pal;
+    let [grid, edge] = value.split("+");
+    if (edge === undefined) [grid, edge] = [edge, grid];  // no + so no grid
+    if (edge) [edge, ...pal] = edge.split("-");
+    let message = "";
+    let g, e, p;
+    if (grid) {
+      g = intColor(grid);
+      if (isNaN(g)) message = "Unrecognized color: " + grid;
+    }
+    if (!message && edge) {
+      e = intColor(edge);
+      if (isNaN(e)) message = "Unrecognized color: " + edge;
+    }
+    if (!message && pal) {
+      if (pal.length < 5) {
+        message = "Need edge plus at least five tile colors.";
+      } else {
+        p = pal.map(c => intColor(c));
+        for (let i=0; i<pal.length; i+=1) {
+          if (isNaN(p[i])) {
+            message = "unrecognized color: " + pal[i];
+            break;
+          }
+        }
+      }
+    }
+    if (message) {
+      window.alert(message);
+      return;
+    }
+    if (!(grid || edge || pal)) return;
+    if (grid) {
       customGrid = g;
       tiling.palette.gridColor = intColor(g);
     }
-    if (e) {
-      let cols = e;
-      e = cols.shift();
-      if (!isNaN(intColor(e))) {
-        tiling.palette.edgeColor = intColor(e);
-      }
-      cols = cols.map(c => intColor(c));
-      if (cols.length > 4 && cols.every(c => !isNaN(c))) {
-        tiling.palette.tileColors = cols;
-        options.bright = false;
-        options.flip = false;
-        document.getElementById("reverse").checked = false;
-        document.getElementById("flip").checked = false;
-      }
+    if (edge) tiling.palette.edgeColor = intColor(e);
+    if (pal) {
+      tiling.palette.tileColors = p;
+      options.bright = false;
+      options.flip = false;
+      document.getElementById("reverse").checked = false;
+      document.getElementById("flip").checked = false;
+      predef.selectedIndex = 0;
     }
     tiling.draw();
   }

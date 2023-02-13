@@ -155,13 +155,14 @@ class Multigrid {
                                  zrx*zsx + zry*zsy)) * 180/Math.PI;
     });
     angles = angles.map((a, ipair) => [a, ipair]);
-    // Find rhomb (r,s) base angles that are unique to within one tenth degree.
-    // Tenth degree is overkill, but nsym=24, e.g., has a bunch of half-integer
-    // angles which can round either up or down, causing problems.
+    // Find rhomb (r,s) base angles that are unique to within one degree.
+    // We give a random nudge of 1.23e-6 to the angles here in order
+    // to prevent exact half-integer angles from sometimes rounding
+    // up and sometimes rounding down.
     let bases = [];
     let nbases = 0;
     for (let [a, ipair] of Array.from(angles).sort((a, b) => a[0] - b[0])) {
-      let approx = Math.round(10*a);
+      let approx = Math.round(a+1.23e-6);
       if (!nbases || approx != bases[nbases-1]) {
         bases.push(approx);
         pairs[ipair].push(nbases);  // record unique angle bin in pairs array
@@ -182,7 +183,7 @@ class Multigrid {
       if (shapes[ib] == ib) {
         let a = angles[ipair][0];
         if (a > 90.01) {
-          let isupp = bases.indexOf(Math.round(10*(180-a)));
+          let isupp = bases.indexOf(Math.round((180-a)+1.23e-6));
           if (isupp >= 0) {
             shapes[ib] = isupp;
             nshapes -= 1;
