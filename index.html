@@ -409,6 +409,9 @@
           if (2*i + 1 == cols.length) {
             i -= 1;
             continue;
+          } else if (2*i + 3 == cols.length) {
+            i += 1;
+            continue;
           }
           [cols[i], cols[i+1]] = [cols[i+1], cols[i]];
         }
@@ -466,21 +469,7 @@
   }
 
   // Palettes:
-  // For even n, thinnest rhomb gets first color, with color index increasing
-  //   with rhomb angle, until square rhomb.  No rhomb angles count as
-  //   being obtuse.
-  // For odd n, 
-
-  // The greenbrown palette shows the hex tiles (three fused 60 degree
-  // rhombs) which feture prominently in all the nsym divisible by 3
-  // tillings.  Use the following palettes to show the progression:
-  // nsym=6&theme=888-ccd5ae-e9edc9-d4a373-faedcd-fefae0
-  // nsym=9&theme=888-e9edc9-faedcd-fefae0-d4a373-ccd5ae
-  // nsym=12&theme=888-greenbrownB
-  // nsym=15&theme=888-greenbrown
-  // nsym=18&theme=888-greenbrownR
-  // nsym=21&theme=888-ccd5ae-e9edc9-faedcd-fefae0-e9edc9-faedcd-d4a373
-  // nsym=24&theme=888-ccd5ae-e9edc9-faedcd-fefae0-ccd5ae-e9edc9-faedcd-d4a373
+  // Here are a selection of 5 color palettes:
   const themes = {
     browns: new TilePalette("#888", ["#edede9", "#d6ccc2", "#f5ebe0",
                                      "#e3d5ca", "#d5bdaf"]),
@@ -509,6 +498,19 @@
     darkgreens: new TilePalette("#888", ["#edeec9", "#dde7c7", "#bfd8bd",
                                          "#98c9a3", "#77bfa3"]),
   };
+  // Additional nice palettes from https://coolors.co/
+  // pink-to-peach
+  //   fec5bb-fcd5ce-fae1dd-f8edeb-e8e8e4-d8e2dc-ece4db-ffe5d9-ffd7ba-fec89a
+  // dark brown-to-green
+  //   582f0e-7f4f24-936639-a68a64-b6ad90-c2c5aa-a4ac86-656d4a-414833-333d29
+  // gray-to-brown
+  //   https://coolors.co/edede9-d6ccc2-f5ebe0-e3d5ca-d5bdaf
+  // light blues
+  //   https://coolors.co/edf2fb-e2eafc-d7e3fc-ccdbfd-c1d3fe-b6ccfe-abc4ff
+  // light pastels brown-blue
+  //   eddcd2-fff1e6-fde2e4-fad2e1-c5dedd-dbe7e4-f0efeb-d6e2e9-bcd4e6-99c1de
+  // light pastels gray-red
+  //   e2e2df-d2d2cf-e2cfc4-f7d9c4-faedcb-c9e4de-c6def1-dbcdf0-f2c6de-f9c6c9
 
   const tiling = new Tiling(app.stage, new Multigrid(nsym, init), edge);
   if (options.gridColor) tiling.drawGrid = true;
@@ -725,9 +727,12 @@
     } else {
       if (!flip) return;
     }
-    options.flip = true;
-    theme.applyOptions(options);
-    if (!input.checked) delete options.flip;
+    let opt = {...options};
+    opt.flip = true;
+    opt.bright = false;
+    theme.applyOptions(opt);
+    if (input.checked) options.flip = true;
+    else delete options.flip;
     tiling.draw();
   }
   function changeFlip(input) {
@@ -737,9 +742,12 @@
     } else {
       if (!bright) return;
     }
-    options.bright = true;
-    theme.applyOptions(options);
-    if (!input.checked) delete options.bright;
+    let opt = {...options};
+    opt.bright = true;
+    opt.flip = false;
+    theme.applyOptions(opt);
+    if (input.checked) options.bright = true;
+    else delete options.bright;
     tiling.draw();
   }
   function changeIndex(input) {
