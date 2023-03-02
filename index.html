@@ -778,7 +778,7 @@
   }
   function changeCustom(custom) {
     let value = custom.value;
-    let pal;
+    let pal = [];
     let [grid, edge] = value.split("+");
     if (edge === undefined) [grid, edge] = [edge, grid];  // no + so no grid
     if (edge) [edge, ...pal] = edge.split("-");
@@ -792,7 +792,7 @@
       e = intColor(edge);
       if (isNaN(e)) message = "Unrecognized color: " + edge;
     }
-    if (!message && pal) {
+    if (!message && pal.length) {
       if (pal.length < 5) {
         message = "Need edge plus at least five tile colors.";
       } else {
