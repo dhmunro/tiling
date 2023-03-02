@@ -809,13 +809,13 @@
       window.alert(message);
       return;
     }
-    if (!(grid || edge || pal)) return;
+    if (!(grid || edge || pal.length)) return;
     if (grid) {
       customGrid = g;
       tiling.palette.gridColor = intColor(g);
     }
     if (edge) tiling.palette.edgeColor = intColor(e);
-    if (pal) {
+    if (pal.length) {
       tiling.palette.tileColors = p;
       options.bright = false;
       options.flip = false;
